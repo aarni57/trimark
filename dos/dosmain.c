@@ -1,4 +1,4 @@
-#include "demo.h"
+#include "bmark.h"
 #include "vga.h"
 #include "screen.h"
 
@@ -25,14 +25,14 @@ static int init() {
 
     screen = calloc(sizeof(*screen) * SCREEN_NUM_PIXELS, 1);
 
-    if (!demo_init())
+    if (!bmark_init())
         return 0;
 
     return 1;
 }
 
 static void cleanup() {
-    demo_cleanup();
+    bmark_cleanup();
 
     free(screen); screen = NULL;
 
@@ -52,13 +52,13 @@ int main(int argc, char* argv[]) {
     vga_mode(0x13);
 
     while (!kbhit()) {
-        demo_update();
-        demo_render(screen);
+        bmark_update();
+        bmark_render(screen);
         vga_update(screen, 1);
     }
 
     vga_mode(0x3);
-
+    bmark_print_results();
     cleanup();
 
     return 0;

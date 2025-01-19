@@ -1,5 +1,5 @@
 #include "triangle.h"
-#include "math.h"
+#include "mymath.h"
 #include "minmax.h"
 #include "screen.h"
 
@@ -173,11 +173,14 @@ static inline void draw_triangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1,
                         uint8_t *tgt = (uint8_t *)tgt32;
                         switch (width) {
                             case 3:
-                                tgt[2] = color;
-                                // FALLTHRU
-                            case 2:
+                                tgt[0] = color;
                                 tgt[1] = color;
-                                // FALLTHRU
+                                tgt[2] = color;
+                                break;
+                            case 2:
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                break;
                             case 1:
                                 tgt[0] = color;
                                 break;
@@ -206,8 +209,24 @@ static inline void draw_triangle(int32_t x0, int32_t y0, int32_t x1, int32_t y1,
     }
 }
 
-void draw_triangles(const int16_t *draw_buffer, const uint32_t *sort_buffer,
-    uint32_t num, uint8_t *screen) {
+void draw_triangles(const int16_t *draw_buffer, uint32_t num, uint8_t *screen) {
+    assert(draw_buffer && screen);
+    num <<= 3;
+    for (uint32_t i = 0; i < num; i += 8) {
+        int32_t x0 = draw_buffer[i + 0];
+        int32_t y0 = draw_buffer[i + 1];
+        int32_t x1 = draw_buffer[i + 2];
+        int32_t y1 = draw_buffer[i + 3];
+        int32_t x2 = draw_buffer[i + 4];
+        int32_t y2 = draw_buffer[i + 5];
+        uint8_t color = draw_buffer[i + 6];
+
+        draw_triangle(x0, y0, x1, y1, x2, y2, color, screen);
+    }
+}
+
+void draw_triangles_sorted(const int16_t *draw_buffer,
+    const uint32_t *sort_buffer, uint32_t num, uint8_t *screen) {
     assert(draw_buffer && sort_buffer && screen);
     for (uint32_t i = 0; i < num; ++i) {
         uint32_t j = sort_buffer[i] >> 16;

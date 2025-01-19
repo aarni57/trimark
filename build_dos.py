@@ -15,7 +15,7 @@ def compile(source):
     print(Fore.GREEN + os.path.basename(source))
 
     command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
-    #command = ["/Users/aarni/dev/djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DDEBUG", "-march=i486", "-mtune=pentiumpro"]
+    #command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DDEBUG", "-march=i486", "-mtune=pentiumpro"]
 
     for include_path in include_paths:
         command.append("-I" + include_path)
@@ -42,10 +42,11 @@ def strip(input_filename, output_filename):
 #-------------------------------------------------------------------------------
 
 sources = [
-    "src/demo.c",
+    "src/bmark.c",
     "src/triangle.c",
 
     "dos/dosmain.c",
+    "dos/dostime.c",
     "dos/vga.c",
 ]
 
@@ -53,10 +54,10 @@ for source in sources:
     if compile(source) != 0:
         exit()
 
-if link(sources, "demo_sym.exe") != 0:
+if link(sources, "bmark_sym.exe") != 0:
     exit()
 
-if strip("demo_sym.exe", "demo.exe") != 0:
+if strip("bmark_sym.exe", "bmark.exe") != 0:
     exit()
 
-shutil.copyfile("demo.exe", os.path.join("../../dos", "demo.exe"))
+shutil.copyfile("bmark.exe", os.path.join("../../dos", "bmark.exe"))

@@ -1,5 +1,5 @@
-#ifndef MATH_H
-#define MATH_H
+#ifndef MYMATH_H
+#define MYMATH_H
 
 #include <stdint.h>
 #include <assert.h>

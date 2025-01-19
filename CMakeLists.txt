@@ -15,15 +15,17 @@ setup_compiler()
 include_directories(${PROJECT_NAME} src sdl)
 
 set(SRC
-    src/demo.c
-    src/demo.h
-    src/math.h
+    src/bmark.c
+    src/bmark.h
+    src/mymath.h
+    src/mytime.h
     src/minmax.h
     src/screen.h
     src/triangle.c
     src/triangle.h
 
     sdl/sdlmain.c
+    sdl/sdltime.c
 )
 
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SRC})
