@@ -16,8 +16,6 @@
 
 #define SCREEN_NUM_PIXELS (SCREEN_WIDTH * SCREEN_HEIGHT)
 
-#define SCREEN_STRIDE SCREEN_WIDTH
-
 static inline uint32_t mul_by_screen_stride(uint32_t x) {
     return (x << 8) + (x << 6);
 }

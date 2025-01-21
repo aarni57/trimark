@@ -17,12 +17,16 @@ include_directories(${PROJECT_NAME} src sdl)
 set(SRC
     src/bmark.c
     src/bmark.h
+    src/drawtris.c
+    src/drawtris.h
+    src/minmax.h
     src/mymath.h
     src/mytime.h
-    src/minmax.h
     src/screen.h
-    src/triangle.c
-    src/triangle.h
+    src/tridefs.h
+    src/tritmpl.h
+    src/tritmpl2.h
+    src/util.h
 
     sdl/sdlmain.c
     sdl/sdltime.c

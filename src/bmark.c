@@ -1,7 +1,8 @@
 #include "bmark.h"
-#include "triangle.h"
+#include "drawtris.h"
 #include "screen.h"
 #include "mytime.h"
+#include "tridefs.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -24,7 +25,8 @@ static uint32_t xorshift32() {
 
 static int32_t random32_range(int32_t low, int32_t high) {
     assert(low <= high);
-    return low + (int32_t)((uint64_t)xorshift32() * (uint64_t)(high - low) / UINT32_MAX);
+    return low + (int32_t)((uint64_t)xorshift32() *
+        (uint64_t)(high - low) / UINT32_MAX);
 }
 
 static int32_t edge(
@@ -41,10 +43,17 @@ static int32_t edge(
 #define FIRST_COLOR 1
 #define LAST_COLOR (255 - 8)
 
-#define NUM_TRIANGLES 5000
+#define SINGLE_TRIANGLE 0
+
+#if SINGLE_TRIANGLE
+#   define NUM_TRIANGLES 1
+#else
+#   define NUM_TRIANGLES 1000
+#endif
 
 static uint8_t *stored_screen = NULL;
-static int16_t *draw_buffer = NULL;
+static triangle_t *triangles = NULL;
+static uint8_t *triangle_colors = NULL;
 
 //
 
@@ -55,15 +64,32 @@ int bmark_init() {
         return 0;
     }
 
-    draw_buffer = malloc(sizeof(*draw_buffer) * 8 * NUM_TRIANGLES);
-    if (!draw_buffer) {
+    triangles = malloc(sizeof(*triangles) * NUM_TRIANGLES);
+    if (!triangles) {
         bmark_cleanup();
         return 0;
     }
 
-    uint8_t color = FIRST_COLOR;
+    triangle_colors = malloc(sizeof(*triangle_colors) * NUM_TRIANGLES);
+    if (!triangle_colors) {
+        bmark_cleanup();
+        return 0;
+    }
 
-    int16_t *draw_buffer_tgt = draw_buffer;
+    triangle_t *triangles_tgt = triangles;
+    uint8_t *colors_tgt = triangle_colors;
+
+#if SINGLE_TRIANGLE
+    triangle_t *t = triangles_tgt;
+    t->x0 = SUBPIXEL_ONE * 180;
+    t->y0 = SUBPIXEL_ONE * 2;
+    t->x1 = SUBPIXEL_ONE * 2;
+    t->y1 = SUBPIXEL_ONE * 80;
+    t->x2 = SUBPIXEL_ONE * 220;
+    t->y2 = SUBPIXEL_ONE * 160;
+    *colors_tgt = 15;
+#else
+    uint8_t color = FIRST_COLOR;
     for (uint32_t i = 0; i < NUM_TRIANGLES; ++i) {
         int32_t x0, y0, x1, y1, x2, y2;
         int32_t area = 0;
@@ -84,53 +110,85 @@ int bmark_init() {
             assert(area >= 0);
         } while (area == 0);
 
-        *draw_buffer_tgt++ = x0;
-        *draw_buffer_tgt++ = y0;
-        *draw_buffer_tgt++ = x1;
-        *draw_buffer_tgt++ = y1;
-        *draw_buffer_tgt++ = x2;
-        *draw_buffer_tgt++ = y2;
-        *draw_buffer_tgt++ = color;
-        *draw_buffer_tgt++ = 0; // Unused
+        triangle_t *t = triangles_tgt++;
+        t->x[0] = x0;
+        t->y[0] = y0;
+        t->x[1] = x1;
+        t->y[1] = y1;
+        t->x[2] = x2;
+        t->y[2] = y2;
+
+        *colors_tgt++ = color;
 
         color++;
         if (color == LAST_COLOR + 1)
             color = FIRST_COLOR;
     }
+#endif
 
     return 1;
 }
 
 void bmark_cleanup() {
-    free(draw_buffer); draw_buffer = NULL;
+    free(triangle_colors); triangle_colors = NULL;
+    free(triangles); triangles = NULL;
 }
 
-#define NUM_RUNS 4
-
+#if !SINGLE_TRIANGLE
+#   define NUM_RETRIES 1
+#   define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
 static int rendering_done = 0;
 static uint64_t rendering_begin_time[NUM_RUNS] = { 0 };
 static uint64_t rendering_end_time[NUM_RUNS] =  { 0 };
+#endif
 
 void bmark_update() {
+#if SINGLE_TRIANGLE
+    if (1) {
+        triangles[0].x0++;
+        //triangles[0].x1++;
+        //triangles[0].x2++;
+
+        //triangles[0].y0++;
+        triangles[0].y1++;
+        //triangles[0].y2++;
+
+        //triangle_colors[0]++;
+    }
+#else
     if (!rendering_done) {
         rendering_done = 1;
         for (uint32_t i = 0; i < NUM_RUNS; ++i) {
             rendering_begin_time[i] = time_get_us();
-            draw_triangles(draw_buffer, NUM_TRIANGLES, stored_screen);
+            draw_triangles(triangles, triangle_colors, NUM_TRIANGLES,
+                i % TRIANGLE_FUNC_COUNT, stored_screen);
             rendering_end_time[i] = time_get_us();
         }
     }
+#endif
 }
 
 void bmark_render(uint8_t *screen) {
+#if SINGLE_TRIANGLE
+    memset(screen, 0, SCREEN_NUM_PIXELS);
+    draw_triangles(triangles, triangle_colors, NUM_TRIANGLES, screen);
+#else
     memcpy(screen, stored_screen, sizeof(*screen) * SCREEN_NUM_PIXELS);
+#endif
 }
 
 void bmark_print_results() {
+#if !SINGLE_TRIANGLE
     for (uint32_t i = 0; i < NUM_RUNS; ++i) {
+        uint8_t triangle_func_index = i % TRIANGLE_FUNC_COUNT;
+        const char *const triangle_func_name =
+            get_triangle_func_name(triangle_func_index);
+
         uint64_t us = rendering_end_time[i] - rendering_begin_time[i];
         uint64_t ms = us / 1000;
         uint64_t us_remainder = us - ms * 1000;
-        printf("Run #%u: %"PRIu64".%"PRIu64"ms\n", i + 1, ms, us_remainder);
+        printf("%u: '%s': %"PRIu64".%03"PRIu64"ms\n",
+            (i / TRIANGLE_FUNC_COUNT) + 1, triangle_func_name, ms, us_remainder);
     }
+#endif
 }

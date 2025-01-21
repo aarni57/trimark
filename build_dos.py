@@ -43,7 +43,7 @@ def strip(input_filename, output_filename):
 
 sources = [
     "src/bmark.c",
-    "src/triangle.c",
+    "src/drawtris.c",
 
     "dos/dosmain.c",
     "dos/dostime.c",
