@@ -1,4 +1,4 @@
-#include "bmark.h"
+#include "trimark.h"
 #include "vga.h"
 #include "screen.h"
 
@@ -25,14 +25,14 @@ static int init() {
 
     screen = calloc(sizeof(*screen) * SCREEN_NUM_PIXELS, 1);
 
-    if (!bmark_init())
+    if (!trimark_init())
         return 0;
 
     return 1;
 }
 
 static void cleanup() {
-    bmark_cleanup();
+    trimark_cleanup();
 
     free(screen); screen = NULL;
 
@@ -52,13 +52,13 @@ int main(int argc, char* argv[]) {
     vga_mode(0x13);
 
     while (!kbhit()) {
-        bmark_update();
-        bmark_render(screen);
+        trimark_update();
+        trimark_render(screen);
         vga_update(screen, 1);
     }
 
     vga_mode(0x3);
-    bmark_print_results();
+    trimark_print_results();
     cleanup();
 
     return 0;

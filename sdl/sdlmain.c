@@ -1,4 +1,4 @@
-#include "bmark.h"
+#include "trimark.h"
 #include "screen.h"
 
 #include "SDL.h"
@@ -37,14 +37,14 @@ static int init() {
     screen_buffer8 = malloc(sizeof(*screen_buffer8) * SCREEN_NUM_PIXELS);
     memset(screen_buffer8, 0, sizeof(*screen_buffer8) * SCREEN_NUM_PIXELS);
 
-    if (!bmark_init())
+    if (!trimark_init())
         return 0;
 
     return 1;
 }
 
 static void cleanup() {
-    bmark_cleanup();
+    trimark_cleanup();
 
     free(screen_buffer8); screen_buffer8 = NULL;
     free(screen_buffer32); screen_buffer32 = NULL;
@@ -257,8 +257,8 @@ int main() {
             }
         }
 
-        bmark_update();
-        bmark_render(screen_buffer8);
+        trimark_update();
+        trimark_render(screen_buffer8);
 
         convert_screen_buffer();
 
@@ -270,7 +270,7 @@ int main() {
         SDL_RenderPresent(my_sdl_renderer);
     }
 
-    bmark_print_results();
+    trimark_print_results();
     cleanup();
 
     return EXIT_SUCCESS;

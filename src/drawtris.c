@@ -169,15 +169,15 @@ static const draw_triangle_func draw_triangle_funcs[] = {
 };
 
 static const char *const triangle_func_names[] = {
-    "2_aligned",
-    "2",
-    "4_aligned",
-    "4",
-    "8_aligned",
-    "8",
-    "16_aligned",
-    "16",
-    "no_blocks",
+    "2a ",
+    "2  ",
+    "4a ",
+    "4  ",
+    "8a ",
+    "8  ",
+    "16a",
+    "16 ",
+    "nb ",
 };
 
 const char *get_triangle_func_name(uint8_t index) {

@@ -1,4 +1,4 @@
-#include "bmark.h"
+#include "trimark.h"
 #include "drawtris.h"
 #include "screen.h"
 #include "mytime.h"
@@ -29,8 +29,7 @@ static int32_t random32_range(int32_t low, int32_t high) {
         (uint64_t)(high - low) / UINT32_MAX);
 }
 
-static int32_t edge(
-    int32_t x0, int32_t y0,
+static int32_t edge(int32_t x0, int32_t y0,
     int32_t x1, int32_t y1,
     int32_t x2, int32_t y2) {
     return (x2 - x0) * (y1 - y0) - (y2 - y0) * (x1 - x0);
@@ -57,22 +56,22 @@ static uint8_t *triangle_colors = NULL;
 
 //
 
-int bmark_init() {
+int trimark_init() {
     stored_screen = calloc(sizeof(*stored_screen) * SCREEN_NUM_PIXELS, 1);
     if (!stored_screen) {
-        bmark_cleanup();
+        trimark_cleanup();
         return 0;
     }
 
     triangles = malloc(sizeof(*triangles) * NUM_TRIANGLES);
     if (!triangles) {
-        bmark_cleanup();
+        trimark_cleanup();
         return 0;
     }
 
     triangle_colors = malloc(sizeof(*triangle_colors) * NUM_TRIANGLES);
     if (!triangle_colors) {
-        bmark_cleanup();
+        trimark_cleanup();
         return 0;
     }
 
@@ -129,20 +128,20 @@ int bmark_init() {
     return 1;
 }
 
-void bmark_cleanup() {
+void trimark_cleanup() {
     free(triangle_colors); triangle_colors = NULL;
     free(triangles); triangles = NULL;
 }
 
 #if !SINGLE_TRIANGLE
-#   define NUM_RETRIES 1
+#   define NUM_RETRIES 3
 #   define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
 static int rendering_done = 0;
 static uint64_t rendering_begin_time[NUM_RUNS] = { 0 };
 static uint64_t rendering_end_time[NUM_RUNS] =  { 0 };
 #endif
 
-void bmark_update() {
+void trimark_update() {
 #if SINGLE_TRIANGLE
     if (1) {
         triangles[0].x0++;
@@ -168,7 +167,7 @@ void bmark_update() {
 #endif
 }
 
-void bmark_render(uint8_t *screen) {
+void trimark_render(uint8_t *screen) {
 #if SINGLE_TRIANGLE
     memset(screen, 0, SCREEN_NUM_PIXELS);
     draw_triangles(triangles, triangle_colors, NUM_TRIANGLES, screen);
@@ -177,7 +176,7 @@ void bmark_render(uint8_t *screen) {
 #endif
 }
 
-void bmark_print_results() {
+void trimark_print_results() {
 #if !SINGLE_TRIANGLE
     for (uint32_t i = 0; i < NUM_RUNS; ++i) {
         uint8_t triangle_func_index = i % TRIANGLE_FUNC_COUNT;
@@ -187,8 +186,9 @@ void bmark_print_results() {
         uint64_t us = rendering_end_time[i] - rendering_begin_time[i];
         uint64_t ms = us / 1000;
         uint64_t us_remainder = us - ms * 1000;
-        printf("%u: '%s': %"PRIu64".%03"PRIu64"ms\n",
-            (i / TRIANGLE_FUNC_COUNT) + 1, triangle_func_name, ms, us_remainder);
+        printf("%u: %s %"PRIu64".%03"PRIu64"ms\n",
+            (i / TRIANGLE_FUNC_COUNT) + 1,
+            triangle_func_name, ms, us_remainder);
     }
 #endif
 }

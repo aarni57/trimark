@@ -42,8 +42,8 @@ def strip(input_filename, output_filename):
 #-------------------------------------------------------------------------------
 
 sources = [
-    "src/bmark.c",
     "src/drawtris.c",
+    "src/trimark.c",
 
     "dos/dosmain.c",
     "dos/dostime.c",
@@ -54,10 +54,10 @@ for source in sources:
     if compile(source) != 0:
         exit()
 
-if link(sources, "bmark_sym.exe") != 0:
+if link(sources, "trimark_sym.exe") != 0:
     exit()
 
-if strip("bmark_sym.exe", "bmark.exe") != 0:
+if strip("trimark_sym.exe", "trimark.exe") != 0:
     exit()
 
-shutil.copyfile("bmark.exe", os.path.join("../../dos", "bmark.exe"))
+shutil.copyfile("trimark.exe", os.path.join("../../dos", "trimark.exe"))

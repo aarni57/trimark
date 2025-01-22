@@ -15,8 +15,6 @@ setup_compiler()
 include_directories(${PROJECT_NAME} src sdl)
 
 set(SRC
-    src/bmark.c
-    src/bmark.h
     src/drawtris.c
     src/drawtris.h
     src/minmax.h
@@ -24,6 +22,8 @@ set(SRC
     src/mytime.h
     src/screen.h
     src/tridefs.h
+    src/trimark.c
+    src/trimark.h
     src/tritmpl.h
     src/tritmpl2.h
     src/util.h
