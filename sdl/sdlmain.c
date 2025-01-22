@@ -136,9 +136,9 @@ static void convert_screen_buffer() {
     for (uint32_t i = 0; i < SCREEN_NUM_PIXELS; ++i) {
         uint8_t index = *src++;
         const palette_color_t *palette_color = &vga_palette[index];
-        uint8_t r = palette_color->r << 2;
-        uint8_t g = palette_color->g << 2;
-        uint8_t b = palette_color->b << 2;
+        uint8_t r = (palette_color->r << 2) | (palette_color->r >> 4);
+        uint8_t g = (palette_color->g << 2) | (palette_color->g >> 4);
+        uint8_t b = (palette_color->b << 2) | (palette_color->b >> 4);
         *tgt++ = (r << 24) | (g << 16) | (b << 8);
     }
 }
