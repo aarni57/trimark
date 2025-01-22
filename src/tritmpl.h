@@ -144,33 +144,32 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                         }
                     }
 
-#if !defined(NDEBUG)
-                    uint8_t *debug_screen_end = screen_row + SCREEN_WIDTH;
-#endif
+                    uint8_t *tgt = screen_row + left;
+                    ONLY_DEBUG(uint8_t *debug_row_end = screen_row + right;)
 
-#if ALIGNED_FILL
                     uint32_t width = right - left;
                     assert(width > 0);
-                    if (width >= 4) {
+                    if (width > 4) {
+#if ALIGNED_FILL
                         uint32_t aligned_left = (left + 3) & ~3;
                         uint32_t num_unaligned_left = aligned_left - left;
                         if (num_unaligned_left != 0) {
-                            uint8_t *tgt = screen_row + left;
+                            width -= num_unaligned_left;
                             switch (num_unaligned_left) {
                                 case 1:
-                                    assert(tgt < debug_screen_end);
-                                    tgt[0] = color;
+                                    assert(tgt < debug_row_end);
+                                    *tgt++ = color;
                                     break;
                                 case 2:
-                                    assert(tgt + 1 < debug_screen_end);
-                                    tgt[0] = color;
-                                    tgt[1] = color;
+                                    assert(tgt + 1 < debug_row_end);
+                                    *tgt++ = color;
+                                    *tgt++ = color;
                                     break;
                                 case 3:
-                                    assert(tgt + 2 < debug_screen_end);
-                                    tgt[0] = color;
-                                    tgt[1] = color;
-                                    tgt[2] = color;
+                                    assert(tgt + 2 < debug_row_end);
+                                    *tgt++ = color;
+                                    *tgt++ = color;
+                                    *tgt++ = color;
                                     break;
                                 default:
                                     assert(0);
@@ -178,75 +177,70 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                             }
                         }
 
-                        uint32_t aligned_right = right & ~3;
-                        uint32_t width4 = aligned_right - aligned_left;
-                        if (width4 >= 4) {
-                            width4 >>= 2;
-                            uint32_t *tgt32 = (uint32_t *)(screen_row + aligned_left);
-                            assert(is_aligned(tgt32, 4));
-                            uint32_t *tgt32_end = tgt32 + width4;
-                            while (tgt32 < tgt32_end) {
-                                assert(tgt32 >= (uint32_t *)screen_row);
-                                assert((uint8_t *)tgt32 + 3 < debug_screen_end);
-                                *tgt32++ = color4;
-                            }
+                        assert(is_aligned(tgt, 4));
+                        while (width >= 4) {
+                            assert(tgt >= screen_row);
+                            assert(tgt + 3 < debug_row_end);
+                            *(uint32_t *)tgt = color4;
+                            tgt += 4;
+                            width -= 4;
                         }
 
-                        uint32_t num_unaligned_right = right - aligned_right;
-                        if (num_unaligned_right != 0) {
-                            uint8_t *tgt = screen_row + aligned_right;
-                            switch (num_unaligned_right) {
-                                case 1:
-                                    assert(tgt < debug_screen_end);
-                                    tgt[0] = color;
-                                    break;
-                                case 2:
-                                    assert(tgt + 1 < debug_screen_end);
-                                    tgt[0] = color;
-                                    tgt[1] = color;
-                                    break;
-                                case 3:
-                                    assert(tgt + 2 < debug_screen_end);
-                                    tgt[0] = color;
-                                    tgt[1] = color;
-                                    tgt[2] = color;
-                                    break;
-                                default:
-                                    assert(0);
-                                    break;
-                            }
-                        }
-                    } else {
-                        uint8_t *tgt = screen_row + left;
                         switch (width) {
                             case 1:
-                                assert(tgt < debug_screen_end);
+                                assert(tgt < debug_row_end);
                                 tgt[0] = color;
                                 break;
                             case 2:
-                                assert(tgt + 1 < debug_screen_end);
+                                assert(tgt + 1 < debug_row_end);
                                 tgt[0] = color;
                                 tgt[1] = color;
                                 break;
                             case 3:
-                                assert(tgt + 2 < debug_screen_end);
+                                assert(tgt + 2 < debug_row_end);
                                 tgt[0] = color;
                                 tgt[1] = color;
                                 tgt[2] = color;
+                                break;
+                            default:
+                                break;
+                        }
+#else
+                        uint8_t *tgt_end = screen_row + right;
+                        while (tgt < tgt_end) {
+                            assert(tgt < debug_row_end);
+                            *tgt++ = color;
+                        }
+#endif
+                    } else {
+                        switch (width) {
+                            case 1:
+                                assert(tgt < debug_row_end);
+                                tgt[0] = color;
+                                break;
+                            case 2:
+                                assert(tgt + 1 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                break;
+                            case 3:
+                                assert(tgt + 2 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                tgt[2] = color;
+                                break;
+                            case 4:
+                                assert(tgt + 2 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                tgt[2] = color;
+                                tgt[3] = color;
                                 break;
                             default:
                                 assert(0);
                                 break;
                         }
                     }
-#else
-                    uint8_t *tgt = screen_row + left;
-                    uint8_t *tgt_end = screen_row + right;
-                    while (tgt < tgt_end) {
-                        assert(tgt < debug_screen_end);
-                        *tgt++ = color;
-                    }
-#endif
                 }
 
                 ciy0 += dx0;
