@@ -1,1 +1,1 @@
-# retrofiller
+# Triangle rasterizer benchmark for 486-era machines

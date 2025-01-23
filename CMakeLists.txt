@@ -8,7 +8,7 @@ if(APPLE)
     set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD)")
 endif()
 
-project(retrofiller C)
+project(trimark C)
 
 setup_compiler()
 
