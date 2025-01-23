@@ -19,12 +19,10 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     if (min_y >= SCREEN_HEIGHT)
         return;
 
-    max_x = min32(max_x, SCREEN_WIDTH);
+    max_x = min32(max_x, SCREEN_WIDTH); // last column to draw + 1
     min_x = max32(min_x, 0);
-    max_y = min32(max_y, SCREEN_HEIGHT);
+    max_y = min32(max_y, SCREEN_HEIGHT); // last row to draw + 1
     min_y = max32(min_y, 0);
-
-    //
 
     int32_t dx0 = x0 - x1;
     int32_t dy0 = y0 - y1;
@@ -33,37 +31,23 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     int32_t dx2 = x2 - x0;
     int32_t dy2 = y2 - y0;
 
-    //
+    int32_t c0 = imul32(dy0, x0) - imul32(dx0, y0);
+    if (dy0 < 0 || (dy0 == 0 && dx0 > 0)) c0++;
+    dx0 <<= SUBPIXEL_BITS;
+    dy0 <<= SUBPIXEL_BITS;
+    c0 += imul32(dx0, min_y) - imul32(dy0, min_x);
 
-    int32_t c0, c1, c2;
+    int32_t c1 = imul32(dy1, x1) - imul32(dx1, y1);
+    if (dy1 < 0 || (dy1 == 0 && dx1 > 0)) c1++;
+    dx1 <<= SUBPIXEL_BITS;
+    dy1 <<= SUBPIXEL_BITS;
+    c1 += imul32(dx1, min_y) - imul32(dy1, min_x);
 
-    {
-        int32_t c = imul32(dy0, x0) - imul32(dx0, y0);
-        if (dy0 < 0 || (dy0 == 0 && dx0 > 0)) c++;
-        dx0 <<= SUBPIXEL_BITS;
-        dy0 <<= SUBPIXEL_BITS;
-        c0 = c + imul32(dx0, min_y) - imul32(dy0, min_x);
-    }
-
-    //
-
-    {
-        int32_t c = imul32(dy1, x1) - imul32(dx1, y1);
-        if (dy1 < 0 || (dy1 == 0 && dx1 > 0)) c++;
-        dx1 <<= SUBPIXEL_BITS;
-        dy1 <<= SUBPIXEL_BITS;
-        c1 = c + imul32(dx1, min_y) - imul32(dy1, min_x);
-    }
-
-    //
-
-    {
-        int32_t c = imul32(dy2, x2) - imul32(dx2, y2);
-        if (dy2 < 0 || (dy2 == 0 && dx2 > 0)) c++;
-        dx2 <<= SUBPIXEL_BITS;
-        dy2 <<= SUBPIXEL_BITS;
-        c2 = c + imul32(dx2, min_y) - imul32(dy2, min_x);
-    }
+    int32_t c2 = imul32(dy2, x2) - imul32(dx2, y2);
+    if (dy2 < 0 || (dy2 == 0 && dx2 > 0)) c2++;
+    dx2 <<= SUBPIXEL_BITS;
+    dy2 <<= SUBPIXEL_BITS;
+    c2 += imul32(dx2, min_y) - imul32(dy2, min_x);
 
     //
     // Offsets for empty block testing
@@ -86,7 +70,8 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     uint8_t *screen_row_end = screen + mul_by_screen_stride(max_y);
 
 #if ALIGNED_FILL
-    uint32_t color4 = color | (color << 8) | (color << 16) | (color << 24);
+    uint16_t color2 = (uint16_t)color | ((uint16_t)color << 8);
+    uint32_t color4 = (uint32_t)color2 | ((uint32_t)color2 << 16);
 #endif
 
     while (screen_row < screen_row_end) {
@@ -96,9 +81,9 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
         int32_t cx1 = c1;
         int32_t cx2 = c2;
 
-        while (!((cx0 + eo0) > 0 &&
-                 (cx1 + eo1) > 0 &&
-                 (cx2 + eo2) > 0)) {
+        while (!(cx0 + eo0 >= 0 &&
+                 cx1 + eo1 >= 0 &&
+                 cx2 + eo2 >= 0)) {
             cx0 -= dy0 << BLOCK_SIZE_SHIFT;
             cx1 -= dy1 << BLOCK_SIZE_SHIFT;
             cx2 -= dy2 << BLOCK_SIZE_SHIFT;
@@ -119,7 +104,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                 int32_t cix1 = ciy1;
                 int32_t cix2 = ciy2;
 
-                while ((cix0 | cix1 | cix2) <= 0) {
+                while ((cix0 | cix1 | cix2) < 0) {
                     cix0 -= dy0;
                     cix1 -= dy1;
                     cix2 -= dy2;
@@ -133,7 +118,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                 if (left < max_x) {
                     int32_t right = left;
 
-                    while ((cix0 | cix1 | cix2) > 0) {
+                    while ((cix0 | cix1 | cix2) >= 0) {
                         cix0 -= dy0;
                         cix1 -= dy1;
                         cix2 -= dy2;
@@ -149,8 +134,43 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
 
                     uint32_t width = right - left;
                     assert(width > 0);
-                    if (width > 4) {
-#if ALIGNED_FILL
+
+#if COUNTER_FILL
+                    while (width--) {
+                        assert(tgt < debug_row_end);
+                        *tgt++ = color;
+                    }
+#else
+#   if ALIGNED_FILL
+                    if (width <= 4) {
+                        switch (width) {
+                            case 1:
+                                assert(tgt < debug_row_end);
+                                tgt[0] = color;
+                                break;
+                            case 2:
+                                assert(tgt + 1 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                break;
+                            case 3:
+                                assert(tgt + 2 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                tgt[2] = color;
+                                break;
+                            case 4:
+                                assert(tgt + 3 < debug_row_end);
+                                tgt[0] = color;
+                                tgt[1] = color;
+                                tgt[2] = color;
+                                tgt[3] = color;
+                                break;
+                            default:
+                                assert(0);
+                                break;
+                        }
+                    } else {
                         uint32_t aligned_left = (left + 3) & ~3;
                         uint32_t num_unaligned_left = aligned_left - left;
                         if (num_unaligned_left != 0) {
@@ -162,14 +182,14 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                                     break;
                                 case 2:
                                     assert(tgt + 1 < debug_row_end);
-                                    *tgt++ = color;
-                                    *tgt++ = color;
+                                    *(uint16_t *)tgt = color2;
+                                    tgt += 2;
                                     break;
                                 case 3:
                                     assert(tgt + 2 < debug_row_end);
-                                    *tgt++ = color;
-                                    *tgt++ = color;
-                                    *tgt++ = color;
+                                    tgt[0] = color;
+                                    *(uint16_t *)(tgt + 1) = color2;
+                                    tgt += 3;
                                     break;
                                 default:
                                     assert(0);
@@ -193,54 +213,25 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                                 break;
                             case 2:
                                 assert(tgt + 1 < debug_row_end);
-                                tgt[0] = color;
-                                tgt[1] = color;
+                                *(uint16_t *)tgt = color2;
                                 break;
                             case 3:
                                 assert(tgt + 2 < debug_row_end);
-                                tgt[0] = color;
-                                tgt[1] = color;
+                                *(uint16_t *)tgt = color2;
                                 tgt[2] = color;
                                 break;
                             default:
-                                break;
-                        }
-#else
-                        uint8_t *tgt_end = screen_row + right;
-                        while (tgt < tgt_end) {
-                            assert(tgt < debug_row_end);
-                            *tgt++ = color;
-                        }
-#endif
-                    } else {
-                        switch (width) {
-                            case 1:
-                                assert(tgt < debug_row_end);
-                                tgt[0] = color;
-                                break;
-                            case 2:
-                                assert(tgt + 1 < debug_row_end);
-                                tgt[0] = color;
-                                tgt[1] = color;
-                                break;
-                            case 3:
-                                assert(tgt + 2 < debug_row_end);
-                                tgt[0] = color;
-                                tgt[1] = color;
-                                tgt[2] = color;
-                                break;
-                            case 4:
-                                assert(tgt + 2 < debug_row_end);
-                                tgt[0] = color;
-                                tgt[1] = color;
-                                tgt[2] = color;
-                                tgt[3] = color;
-                                break;
-                            default:
-                                assert(0);
                                 break;
                         }
                     }
+#   else
+                    uint8_t *tgt_end = screen_row + right;
+                    while (tgt < tgt_end) {
+                        assert(tgt < debug_row_end);
+                        *tgt++ = color;
+                    }
+#   endif
+#endif
                 }
 
                 ciy0 += dx0;

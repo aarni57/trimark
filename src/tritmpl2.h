@@ -24,8 +24,6 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     max_y = min32(max_y, SCREEN_HEIGHT);
     min_y = max32(min_y, 0);
 
-    //
-
     int32_t dx0 = x0 - x1;
     int32_t dy0 = y0 - y1;
     int32_t dx1 = x1 - x2;
@@ -33,39 +31,23 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     int32_t dx2 = x2 - x0;
     int32_t dy2 = y2 - y0;
 
-    //
+    int32_t c0 = imul32(dy0, x0) - imul32(dx0, y0);
+    if (dy0 < 0 || (dy0 == 0 && dx0 > 0)) c0++;
+    dx0 <<= SUBPIXEL_BITS;
+    dy0 <<= SUBPIXEL_BITS;
+    c0 += imul32(dx0, min_y) - imul32(dy0, min_x);
 
-    int32_t c0, c1, c2;
+    int32_t c1 = imul32(dy1, x1) - imul32(dx1, y1);
+    if (dy1 < 0 || (dy1 == 0 && dx1 > 0)) c1++;
+    dx1 <<= SUBPIXEL_BITS;
+    dy1 <<= SUBPIXEL_BITS;
+    c1 += imul32(dx1, min_y) - imul32(dy1, min_x);
 
-    {
-        int32_t c = imul32(dy0, x0) - imul32(dx0, y0);
-        if (dy0 < 0 || (dy0 == 0 && dx0 > 0)) c++;
-        dx0 <<= SUBPIXEL_BITS;
-        dy0 <<= SUBPIXEL_BITS;
-        c0 = c + imul32(dx0, min_y) - imul32(dy0, min_x);
-    }
-
-    //
-
-    {
-        int32_t c = imul32(dy1, x1) - imul32(dx1, y1);
-        if (dy1 < 0 || (dy1 == 0 && dx1 > 0)) c++;
-        dx1 <<= SUBPIXEL_BITS;
-        dy1 <<= SUBPIXEL_BITS;
-        c1 = c + imul32(dx1, min_y) - imul32(dy1, min_x);
-    }
-
-    //
-
-    {
-        int32_t c = imul32(dy2, x2) - imul32(dx2, y2);
-        if (dy2 < 0 || (dy2 == 0 && dx2 > 0)) c++;
-        dx2 <<= SUBPIXEL_BITS;
-        dy2 <<= SUBPIXEL_BITS;
-        c2 = c + imul32(dx2, min_y) - imul32(dy2, min_x);
-    }
-
-    //
+    int32_t c2 = imul32(dy2, x2) - imul32(dx2, y2);
+    if (dy2 < 0 || (dy2 == 0 && dx2 > 0)) c2++;
+    dx2 <<= SUBPIXEL_BITS;
+    dy2 <<= SUBPIXEL_BITS;
+    c2 += imul32(dx2, min_y) - imul32(dy2, min_x);
 
     uint8_t *screen_row = screen + mul_by_screen_stride(min_y);
     uint8_t *screen_row_end = screen + mul_by_screen_stride(max_y);
@@ -81,7 +63,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
         int32_t cx1 = c1;
         int32_t cx2 = c2;
 
-        while ((cx0 | cx1 | cx2) <= 0) {
+        while ((cx0 | cx1 | cx2) < 0) {
             cx0 -= dy0;
             cx1 -= dy1;
             cx2 -= dy2;
@@ -99,7 +81,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                 cx0 -= dy0;
                 cx1 -= dy1;
                 cx2 -= dy2;
-            } while (right < max_x && (cx0 | cx1 | cx2) > 0);
+            } while (right < max_x && (cx0 | cx1 | cx2) >= 0);
 
             uint8_t *tgt = screen_row + left;
             uint8_t *tgt_end = screen_row + right;
