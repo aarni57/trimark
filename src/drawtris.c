@@ -164,58 +164,7 @@
 
 //
 
-#define BLOCK_SIZE_SHIFT 4
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define ALIGNED_FILL 0
-
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_16
-#include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 4
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define ALIGNED_FILL 1
-
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_16_af
-#include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 4
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define COUNTER_FILL 1
-
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_16_cf
-#include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef COUNTER_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_no_blocks
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_nb
 #include "tritmpl2.h"
 
 #undef DRAW_TRIANGLE_FUNC_NAME
@@ -235,10 +184,7 @@ static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    draw_triangle_16,
-    draw_triangle_16_af,
-    draw_triangle_16_cf,
-    draw_triangle_no_blocks,
+    draw_triangle_nb,
 };
 
 static const char *const triangle_func_names[] = {
@@ -251,9 +197,6 @@ static const char *const triangle_func_names[] = {
     "8  ",
     "8a ",
     "8c ",
-    "16 ",
-    "16a",
-    "16c",
     "nb ",
 };
 

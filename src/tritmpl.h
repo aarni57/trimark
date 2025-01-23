@@ -4,7 +4,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     assert(screen != NULL && is_aligned(screen, 4));
 
     int32_t max_x = (max32(x0, max32(x1, x2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
-    if (max_x < 0)
+    if (max_x <= 0)
         return;
 
     int32_t min_x = (min32(x0, min32(x1, x2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
@@ -12,7 +12,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
         return;
 
     int32_t max_y = (max32(y0, max32(y1, y2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
-    if (max_y < 0)
+    if (max_y <= 0)
         return;
 
     int32_t min_y = (min32(y0, min32(y1, y2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
@@ -132,9 +132,10 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                     uint8_t *tgt = screen_row + left;
                     ONLY_DEBUG(uint8_t *debug_row_end = screen_row + right;)
 
-                    uint32_t width = right - left;
+#if COUNTER_FILL || ALIGNED_FILL
+                    int32_t width = right - left;
                     assert(width > 0);
-
+#endif
 #if COUNTER_FILL
                     while (width--) {
                         assert(tgt < debug_row_end);
@@ -143,6 +144,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
 #else
 #   if ALIGNED_FILL
                     if (width <= 4) {
+#       if 1
                         switch (width) {
                             case 1:
                                 assert(tgt < debug_row_end);
@@ -170,52 +172,61 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                                 assert(0);
                                 break;
                         }
+#       else
+                        while (width--) {
+                            assert(tgt < debug_row_end);
+                            *tgt++ = color;
+                        }
+#       endif
                     } else {
-                        uint32_t aligned_left = (left + 3) & ~3;
-                        uint32_t num_unaligned_left = aligned_left - left;
-                        if (num_unaligned_left != 0) {
-                            width -= num_unaligned_left;
-                            switch (num_unaligned_left) {
-                                case 1:
-                                    assert(tgt < debug_row_end);
-                                    *tgt++ = color;
-                                    break;
-                                case 2:
-                                    assert(tgt + 1 < debug_row_end);
-                                    *(uint16_t *)tgt = color2;
-                                    tgt += 2;
-                                    break;
-                                case 3:
-                                    assert(tgt + 2 < debug_row_end);
-                                    tgt[0] = color;
-                                    *(uint16_t *)(tgt + 1) = color2;
-                                    tgt += 3;
-                                    break;
-                                default:
-                                    assert(0);
-                                    break;
-                            }
+                        int32_t num_unaligned_left = (4 - (left & 3)) & 3;
+                        switch (num_unaligned_left) {
+                            case 1:
+                                assert(tgt < debug_row_end);
+                                *tgt++ = color;
+                                width--;
+                                break;
+                            case 2:
+                                assert(tgt + 1 < debug_row_end);
+                                *(uint16_t *)tgt = color2;
+                                tgt += 2;
+                                width -= 2;
+                                break;
+                            case 3:
+                                assert(tgt + 2 < debug_row_end);
+                                tgt[0] = color;
+                                assert(is_aligned(tgt + 1, 2));
+                                *(uint16_t *)(tgt + 1) = color2;
+                                tgt += 3;
+                                width -= 3;
+                                break;
+                            default:
+                                break;
                         }
 
                         assert(is_aligned(tgt, 4));
-                        while (width >= 4) {
-                            assert(tgt >= screen_row);
-                            assert(tgt + 3 < debug_row_end);
-                            *(uint32_t *)tgt = color4;
-                            tgt += 4;
-                            width -= 4;
+                        uint32_t *tgt32 = (uint32_t *)tgt;
+                        uint32_t *tgt32_end = (uint32_t *)tgt + (width >> 2);
+                        while (tgt32 < tgt32_end) {
+                            assert((uint8_t *)tgt32 >= screen_row);
+                            assert((uint8_t *)tgt32 + 3 < debug_row_end);
+                            *tgt32++ = color4;
                         }
 
-                        switch (width) {
+                        tgt = (uint8_t *)tgt32;
+
+                        switch (width & 3) {
                             case 1:
                                 assert(tgt < debug_row_end);
                                 tgt[0] = color;
                                 break;
                             case 2:
+                                assert(is_aligned(tgt, 2));
                                 assert(tgt + 1 < debug_row_end);
                                 *(uint16_t *)tgt = color2;
                                 break;
                             case 3:
+                                assert(is_aligned(tgt, 2));
                                 assert(tgt + 2 < debug_row_end);
                                 *(uint16_t *)tgt = color2;
                                 tgt[2] = color;

@@ -4,7 +4,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     assert(screen != NULL);
 
     int32_t max_x = (max32(x0, max32(x1, x2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
-    if (max_x < 0)
+    if (max_x <= 0)
         return;
 
     int32_t min_x = (min32(x0, min32(x1, x2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
@@ -12,7 +12,7 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
         return;
 
     int32_t max_y = (max32(y0, max32(y1, y2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
-    if (max_y < 0)
+    if (max_y <= 0)
         return;
 
     int32_t min_y = (min32(y0, min32(y1, y2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;

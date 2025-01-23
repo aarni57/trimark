@@ -134,7 +134,7 @@ void trimark_cleanup() {
 }
 
 #if !SINGLE_TRIANGLE
-#   define NUM_RETRIES 3
+#   define NUM_RETRIES 2
 #   define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
 static int rendering_done = 0;
 static uint64_t rendering_begin_time[NUM_RUNS] = { 0 };
