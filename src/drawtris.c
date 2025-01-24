@@ -14,159 +14,82 @@
 #define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
-#define ALIGNED_FILL 0
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 1
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define ALIGNED_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_af
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 1
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
+#undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_cf
 #include "tritmpl.h"
+#undef DRAW_TRIANGLE_FUNC_NAME
+#undef COUNTER_FILL
 
 #undef BLOCK_SIZE_SHIFT
 #undef BLOCK_SIZE
 #undef BLOCK_MASK
-#undef COUNTER_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
 
 //
 
 #define BLOCK_SIZE_SHIFT 2
 #define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define ALIGNED_FILL 0
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-
-//
-
-#define BLOCK_SIZE_SHIFT 2
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define ALIGNED_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_af
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 2
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
+#undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_cf
 #include "tritmpl.h"
+#undef DRAW_TRIANGLE_FUNC_NAME
+#undef COUNTER_FILL
 
 #undef BLOCK_SIZE_SHIFT
 #undef BLOCK_SIZE
 #undef BLOCK_MASK
-#undef COUNTER_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
 
 //
 
 #define BLOCK_SIZE_SHIFT 3
 #define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define ALIGNED_FILL 0
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 3
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define ALIGNED_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_af
 #include "tritmpl.h"
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-#undef ALIGNED_FILL
 #undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
-#define BLOCK_SIZE_SHIFT 3
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
+#undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_cf
 #include "tritmpl.h"
+#undef DRAW_TRIANGLE_FUNC_NAME
+#undef COUNTER_FILL
 
 #undef BLOCK_SIZE_SHIFT
 #undef BLOCK_SIZE
 #undef BLOCK_MASK
-#undef COUNTER_FILL
-#undef DRAW_TRIANGLE_FUNC_NAME
 
 //
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_nb
 #include "tritmpl2.h"
-
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 //

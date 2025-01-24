@@ -1,3 +1,13 @@
+#if !defined(ALIGNED_FILL)
+#   define ALIGNED_FILL 0
+#   define ALIGNED_FILL_DEFINED_HERE
+#endif
+
+#if !defined(COUNTER_FILL)
+#   define COUNTER_FILL 0
+#   define COUNTER_FILL_DEFINED_HERE
+#endif
+
 static inline void DRAW_TRIANGLE_FUNC_NAME(
     int32_t x0, int32_t y0, int32_t x1, int32_t y1,
     int32_t x2, int32_t y2, uint8_t color, uint8_t *screen) {
@@ -118,16 +128,12 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
                 if (left < max_x) {
                     int32_t right = left;
 
-                    while ((cix0 | cix1 | cix2) >= 0) {
+                    do {
                         cix0 -= dy0;
                         cix1 -= dy1;
                         cix2 -= dy2;
-
                         right++;
-                        if (right >= max_x) {
-                            break;
-                        }
-                    }
+                    } while (right < max_x && (cix0 | cix1 | cix2) >= 0);
 
                     uint8_t *tgt = screen_row + left;
                     ONLY_DEBUG(uint8_t *debug_row_end = screen_row + right;)
@@ -260,3 +266,13 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
         c2 += dx2 << BLOCK_SIZE_SHIFT;
     }
 }
+
+#if defined(ALIGNED_FILL_DEFINED_HERE)
+#   undef ALIGNED_FILL
+#   undef ALIGNED_FILL_DEFINED_HERE
+#endif
+
+#if defined(COUNTER_FILL_DEFINED_HERE)
+#   undef COUNTER_FILL
+#   undef COUNTER_FILL_DEFINED_HERE
+#endif
