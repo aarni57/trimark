@@ -51,7 +51,16 @@ int main(int argc, char* argv[]) {
 
     vga_mode(0x13);
 
-    while (!kbhit()) {
+    int quit = 0;
+    while (!quit) {
+        if (kbhit()) {
+            switch (getch()) {
+                default:
+                    quit = 1;
+                    break;
+            }
+        }
+
         trimark_update();
         trimark_render(screen);
         vga_update(screen, 1);
