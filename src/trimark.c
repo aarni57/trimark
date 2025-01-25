@@ -3,6 +3,8 @@
 #include "screen.h"
 #include "mytime.h"
 #include "tridefs.h"
+#include "util.h"
+#include "random.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -13,92 +15,86 @@
 
 //
 
-static uint32_t xorshift32_state = 0xcafebabe;
-
-static uint32_t xorshift32() {
-    uint32_t x = xorshift32_state;
-    x ^= x << 13;
-    x ^= x >> 17;
-    x ^= x << 5;
-    return xorshift32_state = x;
-}
-
-static int32_t random32_range(int32_t low, int32_t high) {
-    assert(low <= high);
-    return low + (int32_t)((uint64_t)xorshift32() *
-        (uint64_t)(high - low) / UINT32_MAX);
-}
-
 static int32_t edge(int32_t x0, int32_t y0,
     int32_t x1, int32_t y1,
     int32_t x2, int32_t y2) {
     return (x2 - x0) * (y1 - y0) - (y2 - y0) * (x1 - x0);
 }
 
-#define swap32(a, b) { int32_t c = b; b = a; a = c; }
-
 //
 
 #define FIRST_COLOR 1
-#define LAST_COLOR (255 - 8)
+#define LAST_COLOR 127
 
-#define SINGLE_TRIANGLE 0
+static uint8_t *stored_screens[TRIANGLE_FUNC_COUNT] = { NULL };
 
-#if SINGLE_TRIANGLE
-#   define NUM_TRIANGLES 1
-#else
-#   define NUM_TRIANGLES 1000
-#endif
+#define NUM_TRIANGLE_SETS 4
+static triangle_t *triangles[NUM_TRIANGLE_SETS] = { NULL };
+static uint8_t *triangle_colors[NUM_TRIANGLE_SETS] = { NULL };
 
-static uint8_t *stored_screen = NULL;
-static triangle_t *triangles = NULL;
-static uint8_t *triangle_colors = NULL;
+typedef struct triangle_set_params_t {
+    int32_t min_area, max_area, min_x, min_y, max_x, max_y;
+    uint32_t num_triangles;
+} triangle_set_params_t;
+
+static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+    {
+        1600 * 1600, 0,
+        0,
+        0,
+        (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
+        200,
+    },
+    {
+        800 * 800, 1600 * 1600,
+        (SCREEN_WIDTH / 2) * SUBPIXEL_ONE,
+        0,
+        (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
+        300,
+    },
+    {
+        400 * 400, 800 * 800,
+        0,
+        (SCREEN_HEIGHT / 2) * SUBPIXEL_ONE,
+        (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
+        400,
+    },
+    {
+        16 * 16, 400 * 400,
+        (SCREEN_WIDTH / 2) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT / 2) * SUBPIXEL_ONE,
+        (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
+        500,
+    },
+};
+
+#define NUM_RETRIES 3
+#define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
+static int rendering_done = 0;
+static uint64_t rendering_begin_time[NUM_RUNS][NUM_TRIANGLE_SETS] = { 0 };
+static uint64_t rendering_end_time[NUM_RUNS][NUM_TRIANGLE_SETS] =  { 0 };
 
 //
 
-int trimark_init() {
-    stored_screen = calloc(sizeof(*stored_screen) * SCREEN_NUM_PIXELS, 1);
-    if (!stored_screen) {
-        trimark_cleanup();
-        return 0;
-    }
-
-    triangles = malloc(sizeof(*triangles) * NUM_TRIANGLES);
-    if (!triangles) {
-        trimark_cleanup();
-        return 0;
-    }
-
-    triangle_colors = malloc(sizeof(*triangle_colors) * NUM_TRIANGLES);
-    if (!triangle_colors) {
-        trimark_cleanup();
-        return 0;
-    }
-
-    triangle_t *triangles_tgt = triangles;
-    uint8_t *colors_tgt = triangle_colors;
-
-#if SINGLE_TRIANGLE
-    triangle_t *t = triangles_tgt;
-    t->x0 = SUBPIXEL_ONE * 180;
-    t->y0 = SUBPIXEL_ONE * 2;
-    t->x1 = SUBPIXEL_ONE * 2;
-    t->y1 = SUBPIXEL_ONE * 80;
-    t->x2 = SUBPIXEL_ONE * 220;
-    t->y2 = SUBPIXEL_ONE * 160;
-    *colors_tgt = 15;
-#else
+void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
+    int32_t min_area, int32_t max_area, int32_t min_x, int32_t min_y,
+    int32_t max_x, int32_t max_y, uint32_t num) {
+    uint32_t seed = 0xcafebabe;
     uint8_t color = FIRST_COLOR;
-    for (uint32_t i = 0; i < NUM_TRIANGLES; ++i) {
+    for (uint32_t i = 0; i < num; ++i) {
         int32_t x0, y0, x1, y1, x2, y2;
         int32_t area = 0;
         do {
-            x0 = random32_range(0, SCREEN_WIDTH * SUBPIXEL_ONE);
-            y0 = random32_range(0, SCREEN_HEIGHT * SUBPIXEL_ONE);
-            x1 = random32_range(0, SCREEN_WIDTH * SUBPIXEL_ONE);
-            y1 = random32_range(0, SCREEN_HEIGHT * SUBPIXEL_ONE);
-            x2 = random32_range(0, SCREEN_WIDTH * SUBPIXEL_ONE);
-            y2 = random32_range(0, SCREEN_HEIGHT * SUBPIXEL_ONE);
+            x0 = random32_range(&seed, min_x, max_x);
+            y0 = random32_range(&seed, min_y, max_y);
+            x1 = random32_range(&seed, min_x, max_x);
+            y1 = random32_range(&seed, min_y, max_y);
+            x2 = random32_range(&seed, min_x, max_x);
+            y2 = random32_range(&seed, min_y, max_y);
 
             if (edge(x0, y0, x1, y1, x2, y2) < 0) {
                 swap32(x0, x1);
@@ -107,7 +103,8 @@ int trimark_init() {
 
             area = edge(x0, y0, x1, y1, x2, y2);
             assert(area >= 0);
-        } while (area == 0);
+        } while (!((min_area == 0 || area >= min_area) &&
+            (max_area == 0 || area <= max_area)));
 
         triangle_t *t = triangles_tgt++;
         t->x[0] = x0;
@@ -123,72 +120,146 @@ int trimark_init() {
         if (color == LAST_COLOR + 1)
             color = FIRST_COLOR;
     }
-#endif
+}
+
+//
+
+int trimark_init() {
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
+        stored_screens[i] = calloc(SCREEN_NUM_PIXELS, sizeof(*stored_screens[i]));
+        if (!stored_screens[i]) {
+            trimark_cleanup();
+            return 0;
+        }
+    }
+
+    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+        const triangle_set_params_t *p = &triangle_set_params[i];
+
+        triangles[i] = malloc(sizeof(*triangles[i]) * p->num_triangles);
+        if (!triangles[i]) {
+            trimark_cleanup();
+            return 0;
+        }
+
+        triangle_colors[i] = malloc(sizeof(*triangle_colors[i]) * p->num_triangles);
+        if (!triangle_colors[i]) {
+            trimark_cleanup();
+            return 0;
+        }
+
+        generate_random_triangles(triangles[i], triangle_colors[i],
+            p->min_area, p->max_area, p->min_x, p->min_y, p->max_x, p->max_y,
+            p->num_triangles);
+    }
 
     return 1;
 }
 
 void trimark_cleanup() {
-    free(triangle_colors); triangle_colors = NULL;
-    free(triangles); triangles = NULL;
+    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+        free(triangle_colors[i]); triangle_colors[i] = NULL;
+        free(triangles[i]); triangles[i] = NULL;
+    }
+
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
+        free(stored_screens[i]); stored_screens[i] = NULL;
+    }
 }
 
-#if !SINGLE_TRIANGLE
-#   define NUM_RETRIES 2
-#   define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
-static int rendering_done = 0;
-static uint64_t rendering_begin_time[NUM_RUNS] = { 0 };
-static uint64_t rendering_end_time[NUM_RUNS] =  { 0 };
+#if TEST_RASTERIZATION_DIFFERENCES
+static uint32_t rasterization_differences = 0;
 #endif
 
 void trimark_update() {
-#if SINGLE_TRIANGLE
-    if (1) {
-        triangles[0].x0++;
-        //triangles[0].x1++;
-        //triangles[0].x2++;
-
-        //triangles[0].y0++;
-        triangles[0].y1++;
-        //triangles[0].y2++;
-
-        //triangle_colors[0]++;
-    }
-#else
     if (!rendering_done) {
         rendering_done = 1;
+
         for (uint32_t i = 0; i < NUM_RUNS; ++i) {
-            rendering_begin_time[i] = time_get_us();
-            draw_triangles(triangles, triangle_colors, NUM_TRIANGLES,
-                i % TRIANGLE_FUNC_COUNT, stored_screen);
-            rendering_end_time[i] = time_get_us();
+            uint32_t func_index = i % TRIANGLE_FUNC_COUNT;
+            uint8_t *screen = stored_screens[func_index];
+            for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+                rendering_begin_time[i][j] = time_get_us();
+                draw_triangles(triangles[j], triangle_colors[j],
+                    triangle_set_params[j].num_triangles, func_index, screen);
+                rendering_end_time[i][j] = time_get_us();
+            }
         }
-    }
+
+#if TEST_RASTERIZATION_DIFFERENCES
+        uint8_t *ref = stored_screens[TRIANGLE_FUNC_COUNT - 1];
+        for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT - 1; ++i) {
+            uint8_t *cmp = stored_screens[i];
+            for (uint32_t j = 0; j < SCREEN_NUM_PIXELS; ++j) {
+                if (cmp[j] != ref[j]) {
+                    rasterization_differences++;
+                }
+            }
+        }
 #endif
+    }
 }
 
 void trimark_render(uint8_t *screen) {
-#if SINGLE_TRIANGLE
+#if 0
     memset(screen, 0, SCREEN_NUM_PIXELS);
     draw_triangles(triangles, triangle_colors, NUM_TRIANGLES, screen);
 #else
-    memcpy(screen, stored_screen, sizeof(*screen) * SCREEN_NUM_PIXELS);
+    memcpy(screen, stored_screens[0], sizeof(*screen) * SCREEN_NUM_PIXELS);
 #endif
 }
 
 void trimark_print_results() {
-#if !SINGLE_TRIANGLE
-    for (uint32_t i = 0; i < NUM_RUNS; ++i) {
-        uint8_t triangle_func_index = i % TRIANGLE_FUNC_COUNT;
-        const char *const triangle_func_name =
-            get_triangle_func_name(triangle_func_index);
+    uint64_t min_times[TRIANGLE_FUNC_COUNT][NUM_TRIANGLE_SETS];
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
+        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+            min_times[i][j] = 100000000000ULL;
+        }
+    }
 
-        uint64_t us = rendering_end_time[i] - rendering_begin_time[i];
-        uint64_t ms = us / 1000;
-        uint64_t us_remainder = us - ms * 1000;
-        printf("%u: %s %"PRIu64".%03"PRIu64"ms\n",
-            (i / TRIANGLE_FUNC_COUNT) + 1,
-            triangle_func_name, ms, us_remainder);
+    for (uint32_t i = 0; i < NUM_RUNS; ++i) {
+        uint8_t func_index = i % TRIANGLE_FUNC_COUNT;
+        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+            uint64_t us = rendering_end_time[i][j] - rendering_begin_time[i][j];
+            if (us < min_times[func_index][j])
+                min_times[func_index][j] = us;
+        }
+    }
+
+    uint64_t min_times_total[TRIANGLE_FUNC_COUNT];
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
+        min_times_total[i] = 0;
+        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+            min_times_total[i] += min_times[i][j];
+        }
+    }
+
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
+        const char *const triangle_func_name =
+            get_triangle_func_name(i);
+
+        {
+            uint64_t us = min_times_total[i];
+            uint64_t ms = (us + 500) / 1000;
+            printf("%s total: %"PRIu64"ms",
+                triangle_func_name, ms);
+        }
+
+        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+            uint64_t us = min_times[i][j];
+            uint64_t ms = (us + 50) / 1000;
+            uint64_t us_remainder = (us - ms * 1000 + 50) / 100;
+            printf(", %u: %"PRIu64".%01"PRIu64"ms",
+                j, ms, us_remainder);
+        }
+
+        printf("\n");
+    }
+
+#if TEST_RASTERIZATION_DIFFERENCES
+    if (rasterization_differences != 0) {
+        printf("Num rasterization differences to ref: %u\n",
+            rasterization_differences);
     }
 #endif
 }
