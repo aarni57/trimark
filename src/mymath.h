@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include <assert.h>
 
+static inline int32_t abs32(int32_t x) {
+    int32_t mask = x >> 31;
+    return (x ^ mask) - mask;
+}
+
 static inline uint32_t clz_u32(uint32_t a) {
     assert(a != 0);
 #if defined(__WATCOMC__)
