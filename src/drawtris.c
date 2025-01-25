@@ -4,6 +4,7 @@
 #include "screen.h"
 #include "util.h"
 #include "tridefs.h"
+#include "triref.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -15,18 +16,18 @@
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_af
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_cf
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -41,18 +42,18 @@
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_af
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_cf
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -67,18 +68,18 @@
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_af
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_cf
-#include "tritmpl.h"
+#include "tritmplb.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -88,7 +89,9 @@
 
 //
 
-#include "triref.h"
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_s
+#include "tritmpls.h"
+#undef DRAW_TRIANGLE_FUNC_NAME
 
 //
 
@@ -96,6 +99,7 @@ typedef void (*draw_triangle_func)(int32_t x0, int32_t y0, int32_t x1, int32_t y
     int32_t x2, int32_t y2, uint8_t color, uint8_t *screen);
 
 static const draw_triangle_func draw_triangle_funcs[] = {
+    draw_triangle_ref,
     draw_triangle_2,
     draw_triangle_2_af,
     draw_triangle_2_cf,
@@ -105,10 +109,11 @@ static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    draw_triangle_ref,
+    draw_triangle_s,
 };
 
 static const char *const triangle_func_names[] = {
+    "ref",
     "2  ",
     "2a ",
     "2c ",
@@ -118,7 +123,7 @@ static const char *const triangle_func_names[] = {
     "8  ",
     "8a ",
     "8c ",
-    "ref",
+    "s  ",
 };
 
 const char *get_triangle_func_name(uint8_t index) {

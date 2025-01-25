@@ -4,6 +4,8 @@
 #include <stdint.h>
 
 enum {
+    // Barycentric
+    TRIANGLE_FUNC_REF,
     TRIANGLE_FUNC_2,
     TRIANGLE_FUNC_2_AF,
     TRIANGLE_FUNC_2_CF,
@@ -13,7 +15,9 @@ enum {
     TRIANGLE_FUNC_8,
     TRIANGLE_FUNC_8_AF,
     TRIANGLE_FUNC_8_CF,
-    TRIANGLE_FUNC_NB,
+
+    // Standard scanline
+    TRIANGLE_FUNC_S,
 
     TRIANGLE_FUNC_COUNT
 };

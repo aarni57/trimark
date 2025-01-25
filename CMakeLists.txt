@@ -25,7 +25,8 @@ set(SRC
     src/trimark.c
     src/trimark.h
     src/triref.h
-    src/tritmpl.h
+    src/tritmplb.h
+    src/tritmpls.h
     src/util.h
 
     sdl/sdlmain.c

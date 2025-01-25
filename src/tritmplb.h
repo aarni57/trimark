@@ -1,3 +1,5 @@
+// Barycentric rasterizer template with 'empty block' testing
+
 #if !defined(ALIGNED_FILL)
 #   define ALIGNED_FILL 0
 #   define ALIGNED_FILL_DEFINED_HERE
