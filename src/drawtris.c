@@ -88,9 +88,7 @@
 
 //
 
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_nb
-#include "tritmpl2.h"
-#undef DRAW_TRIANGLE_FUNC_NAME
+#include "triref.h"
 
 //
 
@@ -107,7 +105,7 @@ static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    draw_triangle_nb,
+    draw_triangle_ref,
 };
 
 static const char *const triangle_func_names[] = {
@@ -120,7 +118,7 @@ static const char *const triangle_func_names[] = {
     "8  ",
     "8a ",
     "8c ",
-    "nb ",
+    "ref",
 };
 
 const char *get_triangle_func_name(uint8_t index) {
