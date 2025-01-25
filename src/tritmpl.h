@@ -34,6 +34,9 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     max_y = min32(max_y, SCREEN_HEIGHT); // last row to draw + 1
     min_y = max32(min_y, 0);
 
+    min_x &= ~BLOCK_MASK;
+    min_y &= ~BLOCK_MASK;
+
     int32_t dx0 = x0 - x1;
     int32_t dy0 = y0 - y1;
     int32_t dx1 = x1 - x2;
