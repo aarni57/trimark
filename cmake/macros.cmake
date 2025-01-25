@@ -12,6 +12,7 @@ macro(setup_compiler)
         -Werror
         -Wno-nonportable-include-path
         -Wno-unused-function
+        -Wno-unused-parameter
         -ffast-math
         -std=c11
     )
