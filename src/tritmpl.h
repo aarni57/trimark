@@ -29,13 +29,19 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     if (min_y >= SCREEN_HEIGHT)
         return;
 
-    max_x = min32(max_x, SCREEN_WIDTH); // last column to draw + 1
+    max_x = min32(max_x, SCREEN_WIDTH); // last pixel column to draw + 1
     min_x = max32(min_x, 0);
-    max_y = min32(max_y, SCREEN_HEIGHT); // last row to draw + 1
+    max_y = min32(max_y, SCREEN_HEIGHT); // last pixel row to draw + 1
     min_y = max32(min_y, 0);
+
+    //
+    // Align min_x, min_y to start from block corner
 
     min_x &= ~BLOCK_MASK;
     min_y &= ~BLOCK_MASK;
+
+    //
+    // Edge deltas
 
     int32_t dx0 = x0 - x1;
     int32_t dy0 = y0 - y1;
@@ -43,6 +49,10 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     int32_t dy1 = y1 - y2;
     int32_t dx2 = x2 - x0;
     int32_t dy2 = y2 - y0;
+
+    //
+    // Barycentric weights for bounding box corner (min_x, min_y)
+    // and top-left fill rule adjustment
 
     int32_t c0 = imul32(dy0, x0) - imul32(dx0, y0);
     if (dy0 < 0 || (dy0 == 0 && dx0 > 0)) c0++;

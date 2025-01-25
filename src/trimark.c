@@ -23,8 +23,8 @@ static int32_t edge(int32_t x0, int32_t y0,
 
 //
 
-#define FIRST_COLOR 1
-#define LAST_COLOR 127
+#define FIRST_COLOR 32
+#define LAST_COLOR 87
 
 static uint8_t *stored_screens[TRIANGLE_FUNC_COUNT] = { NULL };
 
@@ -39,42 +39,45 @@ typedef struct triangle_set_params_t {
 
 static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
     {
-        1600 * 1600, 0,
+        1200 * 1200, 0,
         0,
         0,
         (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
-        200,
+        128,
     },
     {
-        800 * 800, 1600 * 1600,
+        600 * 600, 1200 * 1200,
         (SCREEN_WIDTH / 2) * SUBPIXEL_ONE,
         0,
         (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
-        300,
+        256,
     },
     {
-        400 * 400, 800 * 800,
+        300 * 300, 600 * 600,
         0,
         (SCREEN_HEIGHT / 2) * SUBPIXEL_ONE,
         (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
-        400,
+        512,
     },
     {
-        16 * 16, 400 * 400,
+        16 * 16, 300 * 300,
         (SCREEN_WIDTH / 2) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT / 2) * SUBPIXEL_ONE,
         (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
-        500,
+        1024,
     },
 };
 
-#define NUM_RETRIES 3
+// NUM_RETRIES can be increased to get a reliable measurement on systems that
+// have fluctuating CPU speed (for example when running in DOSBox)
+#define NUM_RETRIES 1
+
 #define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
-static int rendering_done = 0;
+
 static uint64_t rendering_begin_time[NUM_RUNS][NUM_TRIANGLE_SETS] = { 0 };
 static uint64_t rendering_end_time[NUM_RUNS][NUM_TRIANGLE_SETS] =  { 0 };
 
@@ -171,36 +174,35 @@ void trimark_cleanup() {
 static uint32_t rasterization_differences = 0;
 #endif
 
-void trimark_update() {
-    if (!rendering_done) {
-        rendering_done = 1;
+void trimark_run() {
+    printf("Triangle rasterization benchmark running\n");
+    printf("This may take a while...\n");
 
-        for (uint32_t i = 0; i < NUM_RUNS; ++i) {
-            uint32_t func_index = i % TRIANGLE_FUNC_COUNT;
-            uint8_t *screen = stored_screens[func_index];
-            for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
-                rendering_begin_time[i][j] = time_get_us();
-                draw_triangles(triangles[j], triangle_colors[j],
-                    triangle_set_params[j].num_triangles, func_index, screen);
-                rendering_end_time[i][j] = time_get_us();
-            }
+    for (uint32_t i = 0; i < NUM_RUNS; ++i) {
+        uint32_t func_index = i % TRIANGLE_FUNC_COUNT;
+        uint8_t *screen = stored_screens[func_index];
+        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+            rendering_begin_time[i][j] = time_get_us();
+            draw_triangles(triangles[j], triangle_colors[j],
+                triangle_set_params[j].num_triangles, func_index, screen);
+            rendering_end_time[i][j] = time_get_us();
         }
+    }
 
 #if TEST_RASTERIZATION_DIFFERENCES
-        uint8_t *ref = stored_screens[TRIANGLE_FUNC_COUNT - 1];
-        for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT - 1; ++i) {
-            uint8_t *cmp = stored_screens[i];
-            for (uint32_t j = 0; j < SCREEN_NUM_PIXELS; ++j) {
-                if (cmp[j] != ref[j]) {
-                    rasterization_differences++;
-                }
+    uint8_t *ref = stored_screens[TRIANGLE_FUNC_COUNT - 1];
+    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT - 1; ++i) {
+        uint8_t *cmp = stored_screens[i];
+        for (uint32_t j = 0; j < SCREEN_NUM_PIXELS; ++j) {
+            if (cmp[j] != ref[j]) {
+                rasterization_differences++;
             }
         }
-#endif
     }
+#endif
 }
 
-void trimark_render(uint8_t *screen) {
+void trimark_blit(uint8_t *screen) {
 #if 0
     memset(screen, 0, SCREEN_NUM_PIXELS);
     draw_triangles(triangles, triangle_colors, NUM_TRIANGLES, screen);
@@ -210,6 +212,14 @@ void trimark_render(uint8_t *screen) {
 }
 
 void trimark_print_results() {
+    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+        const triangle_set_params_t *p = &triangle_set_params[i];
+        printf("set %u: %u triangles, min area: %d, max area: %d\n",
+            i, p->num_triangles, p->min_area >> 8, p->max_area >> 8);
+    }
+
+    printf("\n");
+
     uint64_t min_times[TRIANGLE_FUNC_COUNT][NUM_TRIANGLE_SETS];
     for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
         for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {

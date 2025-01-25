@@ -3,12 +3,6 @@ static inline void draw_triangle_ref(
     int32_t x2, int32_t y2, uint8_t color, uint8_t *screen) {
     assert(screen != NULL);
 
-#if 0
-    int32_t min_x = 0;
-    int32_t max_x = SCREEN_WIDTH;
-    int32_t min_y = 0;
-    int32_t max_y = SCREEN_HEIGHT;
-#else
     int32_t max_x = (max32(x0, max32(x1, x2)) + SUBPIXEL_MASK) >> SUBPIXEL_BITS;
     if (max_x <= 0)
         return;
@@ -29,7 +23,6 @@ static inline void draw_triangle_ref(
     min_x = max32(min_x, 0);
     max_y = min32(max_y, SCREEN_HEIGHT); // last row to draw + 1
     min_y = max32(min_y, 0);
-#endif
 
     int32_t dx0 = x0 - x1;
     int32_t dy0 = y0 - y1;

@@ -49,6 +49,8 @@ int main(int argc, char* argv[]) {
         return 2;
     }
 
+    trimark_run();
+
     vga_mode(0x13);
 
     int quit = 0;
@@ -61,8 +63,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        trimark_update();
-        trimark_render(screen);
+        trimark_blit(screen);
         vga_update(screen, 1);
     }
 

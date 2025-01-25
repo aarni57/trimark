@@ -6,8 +6,8 @@
 int trimark_init();
 void trimark_cleanup();
 
-void trimark_update();
-void trimark_render(uint8_t *screen);
+void trimark_run();
+void trimark_blit(uint8_t *screen);
 
 void trimark_print_results();
 

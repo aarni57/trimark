@@ -196,6 +196,8 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    trimark_run();
+
     int quit = 0;
     while (!quit) {
         SDL_Event event;
@@ -257,8 +259,7 @@ int main() {
             }
         }
 
-        trimark_update();
-        trimark_render(screen_buffer8);
+        trimark_blit(screen_buffer8);
 
         convert_screen_buffer();
 
