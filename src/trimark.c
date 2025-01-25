@@ -190,8 +190,8 @@ void trimark_run() {
     }
 
 #if TEST_RASTERIZATION_DIFFERENCES
-    uint8_t *ref = stored_screens[TRIANGLE_FUNC_COUNT - 1];
-    for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT - 1; ++i) {
+    uint8_t *ref = stored_screens[0];
+    for (uint32_t i = 1; i < TRIANGLE_FUNC_COUNT; ++i) {
         uint8_t *cmp = stored_screens[i];
         for (uint32_t j = 0; j < SCREEN_NUM_PIXELS; ++j) {
             if (cmp[j] != ref[j]) {
