@@ -14,6 +14,7 @@ macro(setup_compiler)
         -Wno-unused-function
         -Wno-unused-parameter
         -Wno-unused-variable
+        -Wno-unused-but-set-variable
         -ffast-math
         -std=c11
     )
