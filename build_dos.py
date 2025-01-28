@@ -11,11 +11,25 @@ from colorama import Fore, Back, Style
 
 include_paths = ["src", "dos"]
 
+def generate_asm_listing(source):
+    print(Fore.GREEN + os.path.basename(source))
+
+    command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-S", "-masm=intel", "-Og", "-fverbose-asm", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
+
+    for include_path in include_paths:
+        command.append("-I" + include_path)
+
+    command.append(source)
+    r = subprocess.call(command)
+    if r != 0:
+        print(Fore.RED + "Compile failed: " + source)
+
+    return r
+
 def compile(source):
     print(Fore.GREEN + os.path.basename(source))
 
-    command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-S", "-masm=intel", "-Og", "-fverbose-asm", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
-    #command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
+    command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-x", "c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
     #command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DDEBUG", "-march=i486", "-mtune=pentiumpro"]
 
     for include_path in include_paths:
@@ -52,6 +66,8 @@ sources = [
 ]
 
 for source in sources:
+    if generate_asm_listing(source) != 0:
+        exit()
     if compile(source) != 0:
         exit()
 
