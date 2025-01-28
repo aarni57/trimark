@@ -22,11 +22,12 @@
 #define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
 
 #define SINGLE_TRIANGLE 0
+#define SETS_OF_DIFFERENT_SIZES 1
 
-#if SINGLE_TRIANGLE
-#   define NUM_TRIANGLE_SETS 1
-#else
+#if SETS_OF_DIFFERENT_SIZES
 #   define NUM_TRIANGLE_SETS 4
+#else
+#   define NUM_TRIANGLE_SETS 1
 #endif
 
 //
@@ -59,7 +60,7 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         15, 15,
     },
 };
-#else
+#elif SETS_OF_DIFFERENT_SIZES
 static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
     {
         1200 * 1200, 0,
@@ -98,17 +99,25 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         32, 87,
     },
 };
+#else
+static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+    {
+        800 * 800, 1200 * 1200,
+        0,
+        0,
+        (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
+        64,
+        0, 15,
+    },
+};
 #endif
 
 void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
     int32_t min_area, int32_t max_area, int32_t min_x, int32_t min_y,
     int32_t max_x, int32_t max_y, uint32_t num,
     uint8_t first_color, uint8_t last_color) {
-#if 0
-    uint32_t seed = 215;
-#else
     uint32_t seed = 0xcafebabe;
-#endif
     uint32_t color = first_color;
     for (uint32_t i = 0; i < num; ++i) {
         int32_t x0, y0, x1, y1, x2, y2;
@@ -224,8 +233,8 @@ void trimark_run() {
 #endif
 }
 
-#define FIRST_SCREEN_TO_SHOW 9
-#define LAST_SCREEN_TO_SHOW 10
+#define FIRST_SCREEN_TO_SHOW 0
+#define LAST_SCREEN_TO_SHOW (TRIANGLE_FUNC_COUNT - 1)
 
 static uint64_t previous_frame_time = 0;
 static uint64_t screen_change_timer = 0;
@@ -250,7 +259,6 @@ void trimark_update() {
         shown_screen_index++;
         if (shown_screen_index == LAST_SCREEN_TO_SHOW + 1)
             shown_screen_index = FIRST_SCREEN_TO_SHOW;
-        printf("screen %d\n", shown_screen_index);
     }
 #endif
 }
