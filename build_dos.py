@@ -14,7 +14,8 @@ include_paths = ["src", "dos"]
 def compile(source):
     print(Fore.GREEN + os.path.basename(source))
 
-    command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
+    command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-S", "-masm=intel", "-Og", "-fverbose-asm", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
+    #command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DNDEBUG", "-march=i386", "-mtune=pentiumpro", "-O3", "-funroll-loops", "-ffast-math", "-fomit-frame-pointer", "-fstrength-reduce", "-fforce-addr"]
     #command = ["../djgpp/bin/i586-pc-msdosdjgpp-gcc", "-c", "-DDEBUG", "-march=i486", "-mtune=pentiumpro"]
 
     for include_path in include_paths:

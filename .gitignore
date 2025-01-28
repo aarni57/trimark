@@ -2,3 +2,4 @@ build
 *.exe
 .DS_Store
 *.o
+*.s
