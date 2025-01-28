@@ -5,6 +5,7 @@
 #include "tridefs.h"
 #include "util.h"
 #include "random.h"
+#include "mymath.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -14,29 +15,51 @@
 #include <inttypes.h>
 
 //
+// NUM_RETRIES can be increased to get a reliable measurement on systems that
+// have fluctuating CPU speed (for example when running in DOSBox)
+#define NUM_RETRIES 1
 
-static int32_t edge(int32_t x0, int32_t y0,
-    int32_t x1, int32_t y1,
-    int32_t x2, int32_t y2) {
-    return (x2 - x0) * (y1 - y0) - (y2 - y0) * (x1 - x0);
-}
+#define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
+
+#define SINGLE_TRIANGLE 0
+
+#if SINGLE_TRIANGLE
+#   define NUM_TRIANGLE_SETS 1
+#else
+#   define NUM_TRIANGLE_SETS 4
+#endif
 
 //
 
-#define FIRST_COLOR 32
-#define LAST_COLOR 87
-
 static uint8_t *stored_screens[TRIANGLE_FUNC_COUNT] = { NULL };
 
-#define NUM_TRIANGLE_SETS 4
+static uint64_t rendering_begin_time[NUM_RUNS][NUM_TRIANGLE_SETS] = { 0 };
+static uint64_t rendering_end_time[NUM_RUNS][NUM_TRIANGLE_SETS] =  { 0 };
+
 static triangle_t *triangles[NUM_TRIANGLE_SETS] = { NULL };
 static uint8_t *triangle_colors[NUM_TRIANGLE_SETS] = { NULL };
+
+//
 
 typedef struct triangle_set_params_t {
     int32_t min_area, max_area, min_x, min_y, max_x, max_y;
     uint32_t num_triangles;
+    uint8_t first_color, last_color;
 } triangle_set_params_t;
 
+#if SINGLE_TRIANGLE
+static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+    {
+        1200 * 1200, 0,
+        0,
+        0,
+        (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
+        (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
+        1,
+        15, 15,
+    },
+};
+#else
 static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
     {
         1200 * 1200, 0,
@@ -45,6 +68,7 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
         128,
+        32, 87,
     },
     {
         600 * 600, 1200 * 1200,
@@ -53,6 +77,7 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT / 2 - 1) * SUBPIXEL_ONE,
         256,
+        32, 87,
     },
     {
         300 * 300, 600 * 600,
@@ -61,6 +86,7 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         (SCREEN_WIDTH / 2 - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
         512,
+        32, 87,
     },
     {
         16 * 16, 300 * 300,
@@ -69,25 +95,21 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
         (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
         1024,
+        32, 87,
     },
 };
-
-// NUM_RETRIES can be increased to get a reliable measurement on systems that
-// have fluctuating CPU speed (for example when running in DOSBox)
-#define NUM_RETRIES 1
-
-#define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
-
-static uint64_t rendering_begin_time[NUM_RUNS][NUM_TRIANGLE_SETS] = { 0 };
-static uint64_t rendering_end_time[NUM_RUNS][NUM_TRIANGLE_SETS] =  { 0 };
-
-//
+#endif
 
 void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
     int32_t min_area, int32_t max_area, int32_t min_x, int32_t min_y,
-    int32_t max_x, int32_t max_y, uint32_t num) {
+    int32_t max_x, int32_t max_y, uint32_t num,
+    uint8_t first_color, uint8_t last_color) {
+#if 0
+    uint32_t seed = 215;
+#else
     uint32_t seed = 0xcafebabe;
-    uint8_t color = FIRST_COLOR;
+#endif
+    uint32_t color = first_color;
     for (uint32_t i = 0; i < num; ++i) {
         int32_t x0, y0, x1, y1, x2, y2;
         int32_t area = 0;
@@ -117,11 +139,11 @@ void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
         t->x[2] = x2;
         t->y[2] = y2;
 
-        *colors_tgt++ = color;
+        *colors_tgt++ = (uint8_t)color;
 
         color++;
-        if (color == LAST_COLOR + 1)
-            color = FIRST_COLOR;
+        if (color == (uint32_t)last_color + 1)
+            color = first_color;
     }
 }
 
@@ -153,7 +175,7 @@ int trimark_init() {
 
         generate_random_triangles(triangles[i], triangle_colors[i],
             p->min_area, p->max_area, p->min_x, p->min_y, p->max_x, p->max_y,
-            p->num_triangles);
+            p->num_triangles, p->first_color, p->last_color);
     }
 
     return 1;
@@ -202,12 +224,45 @@ void trimark_run() {
 #endif
 }
 
+#define FIRST_SCREEN_TO_SHOW 9
+#define LAST_SCREEN_TO_SHOW 10
+
+static uint64_t previous_frame_time = 0;
+static uint64_t screen_change_timer = 0;
+static uint32_t shown_screen_index = FIRST_SCREEN_TO_SHOW;
+
+#define SCREEN_CHANGE_INTERVAL (500 * 1000)
+
+void trimark_update() {
+    uint64_t frame_time = time_get_us();
+    uint64_t delta_time = 0;
+    if (previous_frame_time != 0) {
+        assert(frame_time >= previous_frame_time);
+        delta_time += frame_time - previous_frame_time;
+    }
+
+    previous_frame_time = frame_time;
+
+#if 1
+    screen_change_timer += delta_time;
+    if (screen_change_timer >= SCREEN_CHANGE_INTERVAL) {
+        screen_change_timer -= SCREEN_CHANGE_INTERVAL;
+        shown_screen_index++;
+        if (shown_screen_index == LAST_SCREEN_TO_SHOW + 1)
+            shown_screen_index = FIRST_SCREEN_TO_SHOW;
+        printf("screen %d\n", shown_screen_index);
+    }
+#endif
+}
+
 void trimark_blit(uint8_t *screen) {
 #if 0
     memset(screen, 0, SCREEN_NUM_PIXELS);
     draw_triangles(triangles, triangle_colors, NUM_TRIANGLES, screen);
 #else
-    memcpy(screen, stored_screens[0], sizeof(*screen) * SCREEN_NUM_PIXELS);
+    assert(shown_screen_index < TRIANGLE_FUNC_COUNT);
+    memcpy(screen, stored_screens[shown_screen_index],
+        sizeof(*screen) * SCREEN_NUM_PIXELS);
 #endif
 }
 

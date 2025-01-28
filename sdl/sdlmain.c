@@ -259,6 +259,7 @@ int main() {
             }
         }
 
+        trimark_update();
         trimark_blit(screen_buffer8);
 
         convert_screen_buffer();

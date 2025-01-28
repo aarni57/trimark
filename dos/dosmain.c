@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
             }
         }
 
+        trimark_update();
         trimark_blit(screen);
         vga_update(screen, 1);
     }

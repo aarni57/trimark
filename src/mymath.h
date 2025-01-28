@@ -99,4 +99,10 @@ static inline int32_t idiv32(int32_t x, int32_t y) {
 #endif
 }
 
+static inline int32_t edge(int32_t x0, int32_t y0,
+    int32_t x1, int32_t y1,
+    int32_t x2, int32_t y2) {
+    return (x2 - x0) * (y1 - y0) - (y2 - y0) * (x1 - x0);
+}
+
 #endif
