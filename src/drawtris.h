@@ -16,8 +16,11 @@ enum {
     TRIANGLE_FUNC_8_AF,
     TRIANGLE_FUNC_8_CF,
 
+    // Using Bresenham's
+    //TRIANGLE_FUNC_BH,
+
     // Standard scanline
-    TRIANGLE_FUNC_S,
+    TRIANGLE_FUNC_SC,
 
     TRIANGLE_FUNC_COUNT
 };

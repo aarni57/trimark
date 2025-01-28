@@ -11,23 +11,31 @@
 
 //
 
+static int32_t left_edge_buffer[SCREEN_HEIGHT] = { 0 };
+static int32_t right_edge_buffer[SCREEN_HEIGHT] = { 0 };
+
+#define CONCAT(x, y) x ## y
+#define MAKE_TRAVERSE_EDGE_FUNC_NAME(x) CONCAT(x, _traverse_edge)
+
+//
+
 #define BLOCK_SIZE_SHIFT 1
 #define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_af
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_cf
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -42,18 +50,18 @@
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_af
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_4_cf
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -68,18 +76,18 @@
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
 
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 #define ALIGNED_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_af
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef ALIGNED_FILL
 
 #define COUNTER_FILL 1
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_8_cf
-#include "tritmplb.h"
+#include "tritmpba.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 #undef COUNTER_FILL
 
@@ -89,8 +97,14 @@
 
 //
 
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_s
-#include "tritmpls.h"
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_bh
+#include "tritmpbh.h"
+#undef DRAW_TRIANGLE_FUNC_NAME
+
+//
+
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_sc
+#include "tritmpsc.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 //
@@ -109,7 +123,8 @@ static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    draw_triangle_s,
+    //draw_triangle_bh,
+    draw_triangle_sc,
 };
 
 static const char *const triangle_func_names[] = {
@@ -123,7 +138,8 @@ static const char *const triangle_func_names[] = {
     "8  ",
     "8a ",
     "8c ",
-    "s  ",
+    //"bre",
+    "sta",
 };
 
 const char *get_triangle_func_name(uint8_t index) {

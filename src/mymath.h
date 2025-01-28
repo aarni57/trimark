@@ -82,4 +82,21 @@ static inline uint32_t div32(uint32_t x, uint32_t y) {
 #endif
 }
 
+static inline int32_t idiv32(int32_t x, int32_t y) {
+#if defined(__WATCOMC__)
+    __asm {
+        .386
+        mov eax, x
+        mov ebx, y
+        xor edx, edx
+        idiv ebx
+        mov x, eax
+    }
+
+    return x;
+#else
+    return x / y;
+#endif
+}
+
 #endif
