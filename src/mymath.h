@@ -83,6 +83,7 @@ static inline uint32_t div32(uint32_t x, uint32_t y) {
 }
 
 static inline int32_t idiv32(int32_t x, int32_t y) {
+    assert(y != 0);
 #if defined(__WATCOMC__)
     __asm {
         .386

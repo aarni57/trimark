@@ -5,8 +5,7 @@
 #define DDA_BITS 12
 
 static void TRAVERSE_EDGE(
-    int32_t x0, int32_t y0, int32_t x1, int32_t y1,
-    int32_t *left_edge_buffer, int32_t *right_edge_buffer) {
+    int32_t x0, int32_t y0, int32_t x1, int32_t y1, int32_t *edge_buffer) {
     if (y0 > y1) {
         swap32(x0, x1);
         swap32(y0, y1);
@@ -28,10 +27,8 @@ static void TRAVERSE_EDGE(
     int32_t y = iy0;
     while (y <= iy1) {
         int32_t ix = x >> DDA_BITS;
-        if (left_edge_buffer[y] > ix)
-            left_edge_buffer[y] = ix;
-        if (right_edge_buffer[y] < ix)
-            right_edge_buffer[y] = ix;
+        assert(y >= 0 && y < SCREEN_HEIGHT);
+        edge_buffer[y] = ix;
 
         x += x_step;
         y++;
@@ -56,24 +53,41 @@ static inline void DRAW_TRIANGLE_FUNC_NAME(
     min_y = max32(min_y, 0);
     max_y = min32(max_y, SCREEN_HEIGHT);
 
-    // TODO: Find the top point and traverse left and right sides separately
-
-    for (int32_t y = min_y; y < max_y; ++y) {
-        left_edge_buffer[y] = INT32_MAX;
-        right_edge_buffer[y] = INT32_MIN;
+    if (y0 > y1) {
+        swap32(x0, x1);
+        swap32(y0, y1);
     }
 
-    TRAVERSE_EDGE(x0, y0, x1, y1, left_edge_buffer, right_edge_buffer);
-    TRAVERSE_EDGE(x1, y1, x2, y2, left_edge_buffer, right_edge_buffer);
-    TRAVERSE_EDGE(x2, y2, x0, y0, left_edge_buffer, right_edge_buffer);
+    if (y0 > y2) {
+        swap32(x0, x2);
+        swap32(y0, y2);
+    }
+
+    if (y1 > y2) {
+        swap32(x1, x2);
+        swap32(y1, y2);
+    }
+
+    assert(y0 <= y1 && y1 <= y2);
+
+    int32_t dx1 = idiv32((x1 - x0) << SUBPIXEL_BITS, y1 > y0 ? y1 - y0 : 1);
+    int32_t dx2 = idiv32((x2 - x0) << SUBPIXEL_BITS, y2 > y0 ? y2 - y0 : 1);
+
+    if (dx1 < dx2) {
+        TRAVERSE_EDGE(x0, y0, x1, y1, left_edge_buffer);
+        TRAVERSE_EDGE(x1, y1, x2, y2, left_edge_buffer);
+        TRAVERSE_EDGE(x0, y0, x2, y2, right_edge_buffer);
+    } else {
+        TRAVERSE_EDGE(x0, y0, x1, y1, right_edge_buffer);
+        TRAVERSE_EDGE(x1, y1, x2, y2, right_edge_buffer);
+        TRAVERSE_EDGE(x0, y0, x2, y2, left_edge_buffer);
+    }
 
     uint8_t *screen_row = screen + mul_by_screen_stride(min_y);
 
     uint8_t y = min_y;
     while (y < (uint8_t)max_y) {
         assert(y < SCREEN_HEIGHT);
-        assert(left_edge_buffer[y] != INT32_MAX);
-        assert(right_edge_buffer[y] != INT32_MIN);
         int32_t left = max32((left_edge_buffer[y] + SUBPIXEL_MASK) >> SUBPIXEL_BITS, 0);
         int32_t right = min32((right_edge_buffer[y] + SUBPIXEL_MASK) >> SUBPIXEL_BITS, SCREEN_WIDTH);
         for (int32_t x = left; x < right; x++) {
