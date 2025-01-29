@@ -15,7 +15,7 @@ static int nearptr_enabled = 0;
 static int vga_initialized = 0;
 static uint8_t *screen = NULL;
 
-static int init() {
+static int init(int argc, const char *const *argv) {
     if (!__djgpp_nearptr_enable())
         return 0;
     nearptr_enabled = 1;
@@ -25,7 +25,7 @@ static int init() {
 
     screen = calloc(sizeof(*screen) * SCREEN_NUM_PIXELS, 1);
 
-    if (!trimark_init())
+    if (!trimark_init(argc, argv))
         return 0;
 
     return 1;
@@ -43,8 +43,8 @@ static void cleanup() {
         __djgpp_nearptr_disable();
 }
 
-int main(int argc, char* argv[]) {
-    if (!init()) {
+int main(int argc, char *argv[]) {
+    if (!init(argc, (const char * const *)argv)) {
         cleanup();
         return 2;
     }

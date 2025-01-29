@@ -107,8 +107,7 @@ static const triangle_set_params_t over_the_edges_params[] = {
 void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
     int32_t min_area, int32_t max_area, int32_t min_x, int32_t min_y,
     int32_t max_x, int32_t max_y, uint32_t num,
-    uint8_t first_color, uint8_t last_color) {
-    uint32_t seed = 0xcafebabe;
+    uint8_t first_color, uint8_t last_color, uint32_t seed) {
     uint32_t color = first_color;
     for (uint32_t i = 0; i < num; ++i) {
         int32_t x0, y0, x1, y1, x2, y2;
@@ -152,7 +151,24 @@ void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
 static uint32_t num_triangle_sets = 0;
 static const triangle_set_params_t *triangle_set_params = NULL;
 
-int trimark_init() {
+int trimark_init(int argc, const char *const *argv) {
+    uint32_t set_index = 2;
+    uint32_t seed = 0xcafebabe;
+
+    if (argc >= 2) {
+        char c = argv[1][0];
+        if (c != '\0') {
+            char c2 = argv[1][1];
+            if (c2 == '\0' && c >= '0' && c <= '2') {
+                set_index = c - '0';
+            }
+        }
+
+        if (argc >= 3) {
+            seed = atoi(argv[2]);
+        }
+    }
+
     for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
         stored_screens[i] = calloc(SCREEN_NUM_PIXELS, sizeof(*stored_screens[i]));
         if (!stored_screens[i]) {
@@ -161,7 +177,6 @@ int trimark_init() {
         }
     }
 
-    uint32_t set_index = 2;
     switch (set_index) {
         default:
         case 0:
@@ -198,7 +213,7 @@ int trimark_init() {
 
         generate_random_triangles(triangles[i], triangle_colors[i],
             p->min_area, p->max_area, p->min_x, p->min_y, p->max_x, p->max_y,
-            p->num_triangles, p->first_color, p->last_color);
+            p->num_triangles, p->first_color, p->last_color, seed);
     }
 
     return 1;

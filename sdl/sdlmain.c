@@ -32,12 +32,12 @@ static void update_window_fullscreen() {
     SDL_SetWindowFullscreen(my_sdl_window, window_fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
 }
 
-static int init() {
+static int init(int argc, const char *const *argv) {
     screen_buffer32 = malloc(sizeof(*screen_buffer32) * SCREEN_NUM_PIXELS);
     screen_buffer8 = malloc(sizeof(*screen_buffer8) * SCREEN_NUM_PIXELS);
     memset(screen_buffer8, 0, sizeof(*screen_buffer8) * SCREEN_NUM_PIXELS);
 
-    if (!trimark_init())
+    if (!trimark_init(argc, argv))
         return 0;
 
     return 1;
@@ -150,14 +150,14 @@ static void convert_screen_buffer() {
 #define WINDOW_WIDTH (SCREEN_LOGICAL_WIDTH * WINDOW_SCALE)
 #define WINDOW_HEIGHT (SCREEN_LOGICAL_HEIGHT * WINDOW_SCALE)
 
-int main() {
+int main(int argc, char *argv[]) {
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "metal");
 
     if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_VIDEO) != 0) {
         return EXIT_FAILURE;
     }
 
-    my_sdl_window = SDL_CreateWindow("retrofiller demo",
+    my_sdl_window = SDL_CreateWindow("Triangle rasterizer benchmark",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -191,7 +191,7 @@ int main() {
         SDL_TEXTUREACCESS_STREAMING,
         SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    if (!init()) {
+    if (!init(argc, (const char * const *)argv)) {
         cleanup();
         return EXIT_FAILURE;
     }

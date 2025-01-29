@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-int trimark_init();
+int trimark_init(int argc, const char *const *argv);
 void trimark_cleanup();
 
 void trimark_run();
