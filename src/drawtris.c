@@ -97,14 +97,14 @@ static int32_t right_edge_buffer[SCREEN_HEIGHT] = { 0 };
 
 //
 
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_bh
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_bham
 #include "tritmpbh.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 //
 
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_sc
-#include "tritmpsc.h"
+#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_std
+#include "tritmps.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
 
 //
@@ -123,23 +123,23 @@ static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    //draw_triangle_bh,
-    draw_triangle_sc,
+    //draw_triangle_bham,
+    draw_triangle_std,
 };
 
 static const char *const triangle_func_names[] = {
-    "ref",
-    "2  ",
-    "2a ",
-    "2c ",
-    "4  ",
-    "4a ",
-    "4c ",
-    "8  ",
-    "8a ",
-    "8c ",
-    //"bre",
-    "sta",
+    "ref ",
+    "2   ",
+    "2a  ",
+    "2c  ",
+    "4   ",
+    "4a  ",
+    "4c  ",
+    "8   ",
+    "8a  ",
+    "8c  ",
+    //"bham",
+    "std ",
 };
 
 const char *get_triangle_func_name(uint8_t index) {

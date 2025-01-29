@@ -27,7 +27,7 @@ set(SRC
     src/triref.h
     src/tritmpba.h
     src/tritmpbh.h
-    src/tritmpsc.h
+    src/tritmps.h
     src/util.h
 
     sdl/sdlmain.c

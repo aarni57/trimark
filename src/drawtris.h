@@ -16,11 +16,11 @@ enum {
     TRIANGLE_FUNC_8_AF,
     TRIANGLE_FUNC_8_CF,
 
-    // Using Bresenham's
-    //TRIANGLE_FUNC_BH,
+    // Using Bresenham's line algorithm to find horizontal line ends
+    //TRIANGLE_FUNC_BRESENHAM,
 
-    // Standard scanline
-    TRIANGLE_FUNC_SC,
+    // Standard
+    TRIANGLE_FUNC_STANDARD,
 
     TRIANGLE_FUNC_COUNT
 };

@@ -33,8 +33,8 @@ static inline uint32_t clz_u32(uint32_t a) {
 #endif
 }
 
-static inline uint32_t mul32(uint32_t x, uint32_t y) {
 #if defined(__WATCOMC__)
+static inline uint32_t mul32(uint32_t x, uint32_t y) {
     __asm {
         .386
         mov eax, x
@@ -44,13 +44,13 @@ static inline uint32_t mul32(uint32_t x, uint32_t y) {
     }
 
     return x;
-#else
-    return x * y;
-#endif
 }
+#else
+#   define mul32(x, y) ((x) * (y))
+#endif
 
-static inline int32_t imul32(int32_t x, int32_t y) {
 #if defined(__WATCOMC__)
+static inline int32_t imul32(int32_t x, int32_t y) {
     __asm {
         .386
         mov eax, x
@@ -60,13 +60,14 @@ static inline int32_t imul32(int32_t x, int32_t y) {
     }
 
     return x;
-#else
-    return x * y;
-#endif
 }
+#else
+#   define imul32(x, y) ((x) * (y))
+#endif
 
-static inline uint32_t div32(uint32_t x, uint32_t y) {
 #if defined(__WATCOMC__)
+static inline uint32_t div32(uint32_t x, uint32_t y) {
+    assert(y != 0);
     __asm {
         .386
         mov eax, x
@@ -77,14 +78,14 @@ static inline uint32_t div32(uint32_t x, uint32_t y) {
     }
 
     return x;
-#else
-    return x / y;
-#endif
 }
+#else
+#   define div32(x, y) ((x) / (y))
+#endif
 
+#if defined(__WATCOMC__)
 static inline int32_t idiv32(int32_t x, int32_t y) {
     assert(y != 0);
-#if defined(__WATCOMC__)
     __asm {
         .386
         mov eax, x
@@ -95,10 +96,10 @@ static inline int32_t idiv32(int32_t x, int32_t y) {
     }
 
     return x;
-#else
-    return x / y;
-#endif
 }
+#else
+#   define idiv32(x, y) ((x) / (y))
+#endif
 
 static inline int32_t edge(int32_t x0, int32_t y0,
     int32_t x1, int32_t y1,
