@@ -262,7 +262,7 @@ void trimark_run() {
 #endif
 }
 
-#define FIRST_SCREEN_TO_SHOW 9
+#define FIRST_SCREEN_TO_SHOW 0
 #define LAST_SCREEN_TO_SHOW (TRIANGLE_FUNC_COUNT - 1)
 
 static uint64_t previous_frame_time = 0;

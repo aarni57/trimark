@@ -19,32 +19,6 @@ static int32_t right_edge_buffer[SCREEN_HEIGHT] = { 0 };
 
 //
 
-#define BLOCK_SIZE_SHIFT 1
-#define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
-#define BLOCK_MASK       (BLOCK_SIZE - 1)
-
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2
-#include "tritmpba.h"
-#undef DRAW_TRIANGLE_FUNC_NAME
-
-#define ALIGNED_FILL 1
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_af
-#include "tritmpba.h"
-#undef DRAW_TRIANGLE_FUNC_NAME
-#undef ALIGNED_FILL
-
-#define COUNTER_FILL 1
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_2_cf
-#include "tritmpba.h"
-#undef DRAW_TRIANGLE_FUNC_NAME
-#undef COUNTER_FILL
-
-#undef BLOCK_SIZE_SHIFT
-#undef BLOCK_SIZE
-#undef BLOCK_MASK
-
-//
-
 #define BLOCK_SIZE_SHIFT 2
 #define BLOCK_SIZE       (1 << BLOCK_SIZE_SHIFT)
 #define BLOCK_MASK       (BLOCK_SIZE - 1)
@@ -97,12 +71,6 @@ static int32_t right_edge_buffer[SCREEN_HEIGHT] = { 0 };
 
 //
 
-#define DRAW_TRIANGLE_FUNC_NAME draw_triangle_bham
-#include "tritmpbh.h"
-#undef DRAW_TRIANGLE_FUNC_NAME
-
-//
-
 #define DRAW_TRIANGLE_FUNC_NAME draw_triangle_std
 #include "tritmps.h"
 #undef DRAW_TRIANGLE_FUNC_NAME
@@ -114,32 +82,24 @@ typedef void (*draw_triangle_func)(int32_t x0, int32_t y0, int32_t x1, int32_t y
 
 static const draw_triangle_func draw_triangle_funcs[] = {
     draw_triangle_ref,
-    draw_triangle_2,
-    draw_triangle_2_af,
-    draw_triangle_2_cf,
     draw_triangle_4,
     draw_triangle_4_af,
     draw_triangle_4_cf,
     draw_triangle_8,
     draw_triangle_8_af,
     draw_triangle_8_cf,
-    //draw_triangle_bham,
     draw_triangle_std,
 };
 
 static const char *const triangle_func_names[] = {
-    "ref ",
-    "2   ",
-    "2a  ",
-    "2c  ",
-    "4   ",
-    "4a  ",
-    "4c  ",
-    "8   ",
-    "8a  ",
-    "8c  ",
-    //"bham",
-    "std ",
+    "ref",
+    "4  ",
+    "4a ",
+    "4c ",
+    "8  ",
+    "8a ",
+    "8c ",
+    "std",
 };
 
 const char *get_triangle_func_name(uint8_t index) {

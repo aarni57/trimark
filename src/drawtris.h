@@ -6,18 +6,12 @@
 enum {
     // Barycentric
     TRIANGLE_FUNC_REF,
-    TRIANGLE_FUNC_2,
-    TRIANGLE_FUNC_2_AF,
-    TRIANGLE_FUNC_2_CF,
     TRIANGLE_FUNC_4,
     TRIANGLE_FUNC_4_AF,
     TRIANGLE_FUNC_4_CF,
     TRIANGLE_FUNC_8,
     TRIANGLE_FUNC_8_AF,
     TRIANGLE_FUNC_8_CF,
-
-    // Using Bresenham's line algorithm to find horizontal line ends
-    //TRIANGLE_FUNC_BRESENHAM,
 
     // Standard
     TRIANGLE_FUNC_STANDARD,
