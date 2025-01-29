@@ -16,29 +16,22 @@
 
 //
 // NUM_RETRIES can be increased to get a reliable measurement on systems that
-// have fluctuating CPU speed (for example when running in DOSBox)
+// have a fluctuating CPU speed (for example when running in DOSBox)
 #define NUM_RETRIES 1
 
 #define NUM_RUNS (NUM_RETRIES * TRIANGLE_FUNC_COUNT)
 
-#define SINGLE_TRIANGLE 0
-#define SETS_OF_DIFFERENT_SIZES 1
-
-#if SETS_OF_DIFFERENT_SIZES
-#   define NUM_TRIANGLE_SETS 4
-#else
-#   define NUM_TRIANGLE_SETS 1
-#endif
+#define MAX_TRIANGLE_SETS 4
 
 //
 
 static uint8_t *stored_screens[TRIANGLE_FUNC_COUNT] = { NULL };
 
-static uint64_t rendering_begin_time[NUM_RUNS][NUM_TRIANGLE_SETS] = { 0 };
-static uint64_t rendering_end_time[NUM_RUNS][NUM_TRIANGLE_SETS] =  { 0 };
+static uint64_t rendering_begin_time[NUM_RUNS][MAX_TRIANGLE_SETS] = { 0 };
+static uint64_t rendering_end_time[NUM_RUNS][MAX_TRIANGLE_SETS] =  { 0 };
 
-static triangle_t *triangles[NUM_TRIANGLE_SETS] = { NULL };
-static uint8_t *triangle_colors[NUM_TRIANGLE_SETS] = { NULL };
+static triangle_t *triangles[MAX_TRIANGLE_SETS] = { NULL };
+static uint8_t *triangle_colors[MAX_TRIANGLE_SETS] = { NULL };
 
 //
 
@@ -48,8 +41,7 @@ typedef struct triangle_set_params_t {
     uint8_t first_color, last_color;
 } triangle_set_params_t;
 
-#if SINGLE_TRIANGLE
-static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+static const triangle_set_params_t single_triangle_params[] = {
     {
         1200 * 1200, 0,
         0,
@@ -60,8 +52,8 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         15, 15,
     },
 };
-#elif SETS_OF_DIFFERENT_SIZES
-static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+
+static const triangle_set_params_t four_sizes_params[] = {
     {
         1200 * 1200, 0,
         0,
@@ -99,19 +91,18 @@ static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
         32, 87,
     },
 };
-#else
-static const triangle_set_params_t triangle_set_params[NUM_TRIANGLE_SETS] = {
+
+static const triangle_set_params_t over_the_edges_params[] = {
     {
-        800 * 800, 1200 * 1200,
-        0,
-        0,
-        (SCREEN_WIDTH - 1) * SUBPIXEL_ONE,
-        (SCREEN_HEIGHT - 1) * SUBPIXEL_ONE,
-        64,
-        0, 15,
+        200 * 200, 1600 * 1600,
+        -SCREEN_WIDTH / 2 * SUBPIXEL_ONE,
+        -SCREEN_HEIGHT / 2 * SUBPIXEL_ONE,
+        SCREEN_WIDTH * 3 / 2 * SUBPIXEL_ONE,
+        SCREEN_HEIGHT * 3 / 2 * SUBPIXEL_ONE,
+        512,
+        32, 87,
     },
 };
-#endif
 
 void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
     int32_t min_area, int32_t max_area, int32_t min_x, int32_t min_y,
@@ -158,6 +149,9 @@ void generate_random_triangles(triangle_t *triangles_tgt, uint8_t *colors_tgt,
 
 //
 
+static uint32_t num_triangle_sets = 0;
+static const triangle_set_params_t *triangle_set_params = NULL;
+
 int trimark_init() {
     for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
         stored_screens[i] = calloc(SCREEN_NUM_PIXELS, sizeof(*stored_screens[i]));
@@ -167,7 +161,27 @@ int trimark_init() {
         }
     }
 
-    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+    uint32_t set_index = 2;
+    switch (set_index) {
+        default:
+        case 0:
+            num_triangle_sets = sizeof(single_triangle_params)
+                / sizeof(triangle_set_params_t);
+            triangle_set_params = single_triangle_params;
+            break;
+        case 1:
+            num_triangle_sets = sizeof(four_sizes_params)
+                / sizeof(triangle_set_params_t);
+            triangle_set_params = four_sizes_params;
+            break;
+        case 2:
+            num_triangle_sets = sizeof(over_the_edges_params)
+                / sizeof(triangle_set_params_t);
+            triangle_set_params = over_the_edges_params;
+            break;
+    }
+
+    for (uint32_t i = 0; i < num_triangle_sets; ++i) {
         const triangle_set_params_t *p = &triangle_set_params[i];
 
         triangles[i] = malloc(sizeof(*triangles[i]) * p->num_triangles);
@@ -191,7 +205,7 @@ int trimark_init() {
 }
 
 void trimark_cleanup() {
-    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+    for (uint32_t i = 0; i < num_triangle_sets; ++i) {
         free(triangle_colors[i]); triangle_colors[i] = NULL;
         free(triangles[i]); triangles[i] = NULL;
     }
@@ -212,7 +226,7 @@ void trimark_run() {
     for (uint32_t i = 0; i < NUM_RUNS; ++i) {
         uint32_t func_index = i % TRIANGLE_FUNC_COUNT;
         uint8_t *screen = stored_screens[func_index];
-        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+        for (uint32_t j = 0; j < num_triangle_sets; ++j) {
             rendering_begin_time[i][j] = time_get_us();
             draw_triangles(triangles[j], triangle_colors[j],
                 triangle_set_params[j].num_triangles, func_index, screen);
@@ -233,7 +247,7 @@ void trimark_run() {
 #endif
 }
 
-#define FIRST_SCREEN_TO_SHOW 0
+#define FIRST_SCREEN_TO_SHOW 9
 #define LAST_SCREEN_TO_SHOW (TRIANGLE_FUNC_COUNT - 1)
 
 static uint64_t previous_frame_time = 0;
@@ -275,7 +289,7 @@ void trimark_blit(uint8_t *screen) {
 }
 
 void trimark_print_results() {
-    for (uint32_t i = 0; i < NUM_TRIANGLE_SETS; ++i) {
+    for (uint32_t i = 0; i < num_triangle_sets; ++i) {
         const triangle_set_params_t *p = &triangle_set_params[i];
         printf("set %u: %u triangles, min area: %d, max area: %d\n",
             i, p->num_triangles, p->min_area >> 8, p->max_area >> 8);
@@ -283,16 +297,16 @@ void trimark_print_results() {
 
     printf("\n");
 
-    uint64_t min_times[TRIANGLE_FUNC_COUNT][NUM_TRIANGLE_SETS];
+    uint64_t min_times[TRIANGLE_FUNC_COUNT][MAX_TRIANGLE_SETS];
     for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
-        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+        for (uint32_t j = 0; j < num_triangle_sets; ++j) {
             min_times[i][j] = 100000000000ULL;
         }
     }
 
     for (uint32_t i = 0; i < NUM_RUNS; ++i) {
         uint8_t func_index = i % TRIANGLE_FUNC_COUNT;
-        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+        for (uint32_t j = 0; j < num_triangle_sets; ++j) {
             uint64_t us = rendering_end_time[i][j] - rendering_begin_time[i][j];
             if (us < min_times[func_index][j])
                 min_times[func_index][j] = us;
@@ -302,7 +316,7 @@ void trimark_print_results() {
     uint64_t min_times_total[TRIANGLE_FUNC_COUNT];
     for (uint32_t i = 0; i < TRIANGLE_FUNC_COUNT; ++i) {
         min_times_total[i] = 0;
-        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+        for (uint32_t j = 0; j < num_triangle_sets; ++j) {
             min_times_total[i] += min_times[i][j];
         }
     }
@@ -318,7 +332,7 @@ void trimark_print_results() {
                 triangle_func_name, ms);
         }
 
-        for (uint32_t j = 0; j < NUM_TRIANGLE_SETS; ++j) {
+        for (uint32_t j = 0; j < num_triangle_sets; ++j) {
             uint64_t us = min_times[i][j];
             uint64_t ms = (us + 50) / 1000;
             uint64_t us_remainder = (us - ms * 1000 + 50) / 100;
